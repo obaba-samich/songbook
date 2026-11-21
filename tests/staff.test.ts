@@ -41,7 +41,7 @@ describe('measures', () => {
 
 describe('engraved staff', () => {
   const strings = ['|-----0~~-|', '|---------|', '|0h2-5/7--|', '|-7b9r7---|', '|-0p------|', '|3--------|'];
-  const out = renderStaff([sys(strings, ['  G', '  PM------'])], { ...opts, timeSig: '4/4', tempo: 95 });
+  const out = renderStaff([sys(strings, ['  G', '  PM------'])], { ...opts, time: '4/4', showTimeSig: true, tempo: 95 });
 
   it('draws six string lines per row and counts measures', () => {
     expect(out.measures).toBe(1);
