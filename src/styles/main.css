@@ -109,9 +109,9 @@ code { font-family: var(--mono); font-size: 0.92em; }
 .song-head { text-align: center; }
 .song-head h1 { font-family: var(--serif); font-weight: 600; font-size: 2.1em; margin: 0; line-height: 1.1; }
 .song-head .artist { font-family: var(--serif); font-style: italic; font-size: 1.1em; margin: 0.2em 0 0; color: var(--muted); }
-.song-head .meta { font-size: 0.8em; margin: 0.6em 0 0; color: var(--muted); }
+.song-head .meta { font-family: var(--serif); font-size: 0.8em; margin: 0.6em 0 0; color: var(--muted); }
 .song-head .dot { color: var(--faint); }
-.song-comment, .sec-comment { font-style: italic; color: var(--muted); font-size: 0.8em; margin: 0.3em 0; }
+.song-comment, .sec-comment { font-family: var(--serif); font-style: italic; color: var(--muted); font-size: 0.8em; margin: 0.3em 0; }
 .song-comment::before, .sec-comment::before { content: '— '; }
 
 /* ---- sections ---- */
@@ -136,11 +136,11 @@ code { font-family: var(--mono); font-size: 0.92em; }
 .strums { display: flex; flex-wrap: wrap; gap: 0.4em 1.4em; margin: 0.3em 0 0.6em; }
 .strum { display: inline-flex; align-items: center; gap: 0.35em; }
 .strum-name { font-size: 0.6em; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-right: 0.3em; }
-.strokes { display: inline-flex; border: 1px solid var(--line); border-radius: 0.4em; padding: 0.15em 0.2em; }
+.strokes { display: inline-flex; padding: 0.15em 0.2em; }
 .stroke { display: inline-flex; flex-direction: column; align-items: center; width: 1.5em; cursor: help; }
 .stroke b { font-size: 1.35em; line-height: 1.1; min-height: 1.1em; }
 .stroke.down b { color: var(--fg); }
-.stroke.up b { color: var(--accent); }
+.stroke.up b { color: var(--fg); }
 .stroke.chuck b { color: var(--muted); font-size: 1em; padding-top: 0.15em; }
 .stroke i { font-style: normal; font-size: 0.55em; color: var(--muted); font-variant-numeric: tabular-nums; }
 .repeat-mark { font-size: 1.3em; font-weight: 700; color: var(--muted); cursor: help; }
@@ -149,10 +149,11 @@ code { font-family: var(--mono); font-size: 0.92em; }
 .strum.missing { color: var(--err); }
 
 /* lyrics */
-.lyric { display: flex; flex-wrap: wrap; align-items: flex-end; margin: 0.1em 0 0.35em; }
+.lyric { font-family: var(--serif); display: flex; flex-wrap: wrap; align-items: flex-end; margin: 0.1em 0 0.35em; }
 .lyric.plain { display: block; }
+.chip { font-family: var(--serif); }
 .seg { display: inline-flex; flex-direction: column; }
-.seg .ch { font-weight: 700; color: var(--accent); white-space: pre; padding-right: 0.45em; font-size: 0.9em; line-height: 1.2; }
+.seg .ch { font-weight: 700; color: var(--fg); white-space: pre; padding-right: 0.45em; font-size: 0.9em; line-height: 1.2; }
 .seg .ly { white-space: pre; }
 .gap { height: 0.7em; }
 
@@ -200,14 +201,14 @@ code { font-family: var(--mono); font-size: 0.92em; }
 .st-knock { fill: var(--bg); }
 .st-fret { fill: var(--fg); font: 600 11.5px var(--sans); text-anchor: middle; dominant-baseline: central; }
 .st-note { cursor: help; }
-.st-note:hover .st-fret, .st-note.tip-active .st-fret, .st-fx:hover .st-hp, .st-fx.tip-active .st-hp { fill: var(--accent); }
+.st-note:hover .st-fret, .st-note.tip-active .st-fret { fill: var(--fg); }
 .st-note:hover .st-knock, .st-note.tip-active .st-knock { fill: var(--hl); }
 .st-num { fill: var(--muted); font: 8px var(--sans); }
 .st-clef { fill: var(--fg); font: 700 12px var(--serif); text-anchor: middle; dominant-baseline: central; }
 .st-sname { fill: var(--muted); font: 600 8.5px var(--mono); text-anchor: middle; dominant-baseline: central; cursor: help; }
 .st-sig { fill: var(--fg); font: 700 24px var(--serif); text-anchor: middle; }
 .st-tempo { fill: var(--fg); font: 600 9.5px var(--sans); }
-.st-chord { fill: var(--fg); font: 600 10px var(--sans); }
+.st-chord { fill: var(--fg); font: 700 10.5px var(--serif); }
 .st-text { fill: var(--muted); font: italic 8px var(--sans); }
 .st-effect { fill: var(--muted); font: 8px var(--sans); }
 .st-dash { stroke: var(--muted); stroke-width: 0.7; stroke-dasharray: 3 2; }
@@ -220,6 +221,15 @@ code { font-family: var(--mono); font-size: 0.92em; }
 .st-hit { fill: transparent; }
 .st-fx { cursor: help; }
 .staff [data-tip]:hover, .staff .tip-active { background: none; }
+
+/* score extras: section names, rhythm, pick strokes, lyrics */
+.st-section { fill: var(--fg); font: italic 400 13px var(--serif); }
+.st-stem { stroke: var(--fg); stroke-width: 0.9; }
+.st-beam { fill: var(--fg); }
+.st-flag { fill: none; stroke: var(--fg); stroke-width: 1; }
+.st-pick { fill: none; stroke: var(--fg); stroke-width: 1.1; cursor: help; }
+.st-lyric { fill: var(--fg); font: 10px var(--serif); }
+.view-tab { margin-top: 0.4em; }
 
 /* help panel */
 .help-panel {
