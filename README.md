@@ -1,5 +1,7 @@
 # Songbook
 
+Repo: https://github.com/obaba-samich/songbook (private).
+
 A local guitar songbook that runs in the browser. Each song is one `.gsong` text
 file (ChordPro-style) that holds everything: metadata, chord voicings, strum
 patterns, sections with lyrics + chords, tab, song order, and optionally several
@@ -21,8 +23,9 @@ reloads the page). Any other `.gsong` can be opened with **Open .gsong**,
 
 ## Views
 
-- **Tablature** — 6-line tab per section, wrapped at bar lines to fit the
-  screen. Hover/tap any number or symbol for an explanation; toggle string
+- **Tablature** — engraved tab staff (Guitar Pro style): string lines, fret
+  numbers on the strings, measure numbers, chord names, P.M./let ring, slurs,
+  slides, bend arrows, vibrato; rows are justified to the page width. Hover/tap any number or symbol for an explanation; toggle string
   names; **How to read tab** explains everything. Sections without tab show
   their chords.
 - **Chords** — each section once, its progression and strum pattern

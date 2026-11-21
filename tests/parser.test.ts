@@ -53,6 +53,14 @@ describe('sample songs', () => {
     expect(r.song.guitars.map((g) => [g.name, g.capo, g.tuning.name])).toEqual([['Rhythm', 2, 'Standard'], ['Lead', 0, 'Drop D']]);
   });
 
+  it('the annotation examples in INSTRUCTIONS.md are valid', () => {
+    const md = readFileSync(new URL('../INSTRUCTIONS.md', import.meta.url), 'utf8');
+    const part = md.split('**Annotation lines**')[1].split('A section can have lyrics')[0];
+    const blocks = part.split('```').filter((_, i) => i % 2 === 1).map((b) => b.replace(/^\n/, ''));
+    expect(blocks).toHaveLength(2);
+    for (const b of blocks) expect(parseSong(`{title: T}\n{artist: A}\n{section: S}\n${b}`).diagnostics).toEqual([]);
+  });
+
   it('the complete example in INSTRUCTIONS.md is valid', () => {
     const md = readFileSync(new URL('../INSTRUCTIONS.md', import.meta.url), 'utf8');
     const example = md.split('## 10. Complete example')[1].split('```')[1].replace(/^\n/, '');

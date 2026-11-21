@@ -200,13 +200,35 @@ Techniques:
 | `~` | vibrato | `5~~` |
 | `(n)` | ghost / optional note | `(3)` |
 
-**Annotation lines** (palm mute, let ring, etc.) go directly above the 6 string
-lines of a system. They must start with `PM` or with a space, and should line
-up with the columns below:
+**Annotation lines** go directly above the 6 string lines of a system. They
+must start with `PM` or a space, and line up with the columns below (count the
+string label too, so text over the first note starts in the column after `|`).
+The app draws them above the staff:
+
+- **Chord names** (`G5`, `Am`, `Csus2`…) sit above the note where the chord
+  starts. Put one over the first note of each measure where the chord changes.
+- `PM----` = palm mute, `let ring----` = let ring; the dashes show how long it
+  lasts and are drawn as a dashed line.
+- Any other word is shown as small text.
+
+Use one annotation line for chord names and another for PM / let ring:
 
 ```
 {tab}
-  PM----PM----|
+  G5           Csus2        D5
+  let ring---------------------------------
+e|------------|------------|------------|
+B|---3--------|---3--------|---3--------|
+G|-0---0---0--|-0---0---0--|-2---2---2--|
+D|0-----------|0-----------|0-----------|
+A|------------|3-----------|------------|
+E|3-----------|------------|------------|
+{end_tab}
+```
+
+```
+{tab}
+  PM----------|
 e|------------|
 B|------------|
 G|------------|
@@ -408,6 +430,7 @@ Go through each item and fix the file if any fails:
    if used, match the tuning and are on every line or none.
 7. Every `{tab}` has a matching `{end_tab}`, inside a section. Only blank
    lines and annotation lines (starting with `PM` or a space) are mixed in.
+   Chord names over the tab sit above the first note of their measure.
 8. Every `[` has a closing `]` on the same line.
 9. If anything is from memory or simplified, there's a `{comment:}` at the top
    saying so and which part.
