@@ -21,7 +21,19 @@ Put your own `.gsong` files in `songs/`. That folder is git-ignored, so your
 songs stay on your machine. They're bundled automatically (in dev,
 adding or editing a file reloads the page). If `songs/` is empty the app shows
 the public-domain examples from `examples/`. Any other `.gsong` can be opened
-with **Open .gsong**, **Open folder**, or by dragging it onto the page.
+with **Open song file**, **Open folder**, or by dragging it onto the page.
+
+### Guitar Pro files
+
+Guitar Pro files (`.gp`, `.gp5`, `.gpx`, `.gp4`, `.gp3`) work too: put them in
+`songs/` or open them the same way. They're drawn with
+[alphaTab](https://alphatab.net) as real tab — rhythm stems under the numbers,
+hammer-ons, slides, bends — and the part picker offers **All guitars
+(stacked)**, **Every part**, or a single track. Guitars and bass show as tab,
+other instruments as sheet music. **▶** plays the song with a cursor that
+follows the notes (click a note to start there; the slider sets the speed).
+Playback needs `npm run dev`; the single-file build draws the tab and ▶
+auto-scrolls instead. Guitar Pro songs only have the Tab view.
 
 ## Views
 

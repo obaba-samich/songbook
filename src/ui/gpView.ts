@@ -1,0 +1,176 @@
+/**
+ * Guitar Pro files (.gp, .gp5, .gpx …) drawn with alphaTab: real tab with
+ * rhythm stems, techniques, every part stacked, and playback with a cursor
+ * that follows the notes.
+ */
+import * as alphaTab from '@coderline/alphatab';
+// Bundled by Vite as asset URLs (alphaTab's own Vite plugin is broken in 1.8.4).
+import bravuraWoff2 from '@coderline/alphatab/font/Bravura.woff2?url';
+import bravuraWoff from '@coderline/alphatab/font/Bravura.woff?url';
+import soundFontUrl from '@coderline/alphatab/soundfont/sonivox.sf2?url';
+
+type Score = alphaTab.model.Score;
+type Track = alphaTab.model.Track;
+
+export interface GpSong {
+  title: string;
+  artist: string;
+  score: Score;
+  bytes: Uint8Array;
+}
+
+export const GP_EXT = /\.(gp|gp3|gp4|gp5|gpx)$/i;
+
+/** Read a Guitar Pro file (throws when the file can't be read). */
+export function loadGp(bytes: Uint8Array, fileName: string): GpSong {
+  const score = alphaTab.importer.ScoreLoader.loadScoreFromBytes(bytes, new alphaTab.Settings());
+  // Guitars and bass as tab only (like Songsterr); everything else as normal sheet music.
+  for (const t of score.tracks) {
+    const tab = isGuitar(t) || isBass(t);
+    for (const st of t.staves) {
+      st.showTablature = tab;
+      st.showStandardNotation = !tab;
+      st.showSlash = false;
+      st.showNumbered = false;
+    }
+  }
+  return { title: score.title || fileName.replace(GP_EXT, ''), artist: score.artist || '', score, bytes };
+}
+
+/**
+ * Clean up track names: "Billie Joe Armstrong | Gibson J-180 | Acoustic Guitar - Acoustic Guitar (steel)"
+ * → "Acoustic Guitar"; "Lead Vocals - Tenor Sax" → "Lead Vocals". The part after " - " is the sound used.
+ */
+export function trackName(t: Track): string {
+  const n = (t.name || t.shortName || `Track ${t.index + 1}`).split('|').pop()!.trim();
+  return n.split(' - ')[0].trim() || n;
+}
+
+const fullName = (t: Track) => `${t.name} ${t.shortName}`;
+
+/**
+ * Guitar parts. Songsterr exports give vocals, piano and sax 6-string
+ * tunings too, so go by the name; fall back to 6-string tracks.
+ */
+export function isGuitar(t: Track): boolean {
+  if (t.isPercussion || !t.staves[0]?.isStringed) return false;
+  if (/bass/i.test(fullName(t))) return false;
+  if (/guitar|gtr/i.test(fullName(t))) return true;
+  if (/vocal|voice|sax|piano|keys|organ|synth|violin|viola|cello|string|wind|flute|trumpet|horn|harmonica|fiddle/i.test(fullName(t))) return false;
+  return t.staves[0].tuning.length >= 6;
+}
+
+export function isBass(t: Track): boolean {
+  return !t.isPercussion && !!t.staves[0]?.isStringed && /bass/i.test(fullName(t)) && !/contrabass|double bass/i.test(fullName(t));
+}
+
+/** Part choices: 'guitars' (all guitars stacked), 'all' (every part stacked) or a track index. */
+export type GpPart = 'guitars' | 'all' | number;
+
+export function partOptions(song: GpSong): { value: string; label: string }[] {
+  const tracks = song.score.tracks;
+  const guitars = tracks.filter(isGuitar);
+  const opts: { value: string; label: string }[] = [];
+  if (guitars.length > 1) opts.push({ value: 'guitars', label: `All guitars (${guitars.length}, stacked)` });
+  opts.push({ value: 'all', label: `Every part (${tracks.length}, stacked)` });
+  tracks.forEach((t) => opts.push({ value: String(t.index), label: trackName(t) }));
+  return opts;
+}
+
+export function defaultPart(song: GpSong): GpPart {
+  const guitars = song.score.tracks.filter(isGuitar);
+  return guitars.length > 1 ? 'guitars' : guitars.length ? guitars[0].index : 'all';
+}
+
+function tracksFor(song: GpSong, part: GpPart): Track[] {
+  const all = song.score.tracks;
+  if (part === 'all') return all;
+  if (part === 'guitars') return all.filter(isGuitar);
+  return [all[part] ?? all[0]];
+}
+
+export interface GpViewOptions {
+  dark: boolean;
+  /** 1 = default size. */
+  scale: number;
+  showStringNames: boolean;
+  onPlayState?: (playing: boolean) => void;
+  onReady?: () => void;
+}
+
+const COLORS = {
+  light: { ink: '#1c1c1c', line: '#9a9a9a', soft: '#777777' },
+  dark: { ink: '#ececec', line: '#6d6d6d', soft: '#a8a8a8' },
+};
+
+/** One mounted score. Create a new one per song; call destroy() when done. */
+export class GpView {
+  private api: alphaTab.AlphaTabApi;
+  private song: GpSong;
+  playing = false;
+
+  constructor(el: HTMLElement, song: GpSong, part: GpPart, o: GpViewOptions) {
+    this.song = song;
+    const c = o.dark ? COLORS.dark : COLORS.light;
+    const settings = {
+      core: {
+        smuflFontSources: new Map([[alphaTab.FontFileFormat.Woff2, bravuraWoff2], [alphaTab.FontFileFormat.Woff, bravuraWoff]]),
+        // Render on the page (no worker files to serve; works from file:// too).
+        useWorkers: false,
+      },
+      display: {
+        // Rhythm stems under the tab numbers.
+        // Each staff's own flags decide (set in loadGp): tab for guitars/bass, notation for the rest.
+        staveProfile: alphaTab.StaveProfile.Default,
+        layoutMode: alphaTab.LayoutMode.Page,
+        scale: o.scale,
+        resources: {
+          mainGlyphColor: c.ink, secondaryGlyphColor: c.soft, scoreInfoColor: c.ink,
+          staffLineColor: c.line, barSeparatorColor: c.line, barNumberColor: c.soft,
+        },
+      },
+      notation: {
+        rhythmMode: alphaTab.TabRhythmMode.ShowWithBars,
+        elements: new Map<alphaTab.NotationElement, boolean>([
+          [alphaTab.NotationElement.GuitarTuning, o.showStringNames],
+          [alphaTab.NotationElement.ScoreWordsAndMusic, false],
+        ]),
+      },
+      player: {
+        playerMode: alphaTab.PlayerMode.EnabledSynthesizer,
+        soundFont: soundFontUrl,
+        scrollElement: document.scrollingElement as HTMLElement,
+        enableCursor: true,
+        enableAnimatedBeatCursor: true,
+        enableUserInteraction: true,
+      },
+    } as unknown as alphaTab.json.SettingsJson;
+    this.api = new alphaTab.AlphaTabApi(el, settings);
+    this.api.playerStateChanged.on((e) => {
+      this.playing = e.state === alphaTab.synth.PlayerState.Playing;
+      o.onPlayState?.(this.playing);
+    });
+    if (o.onReady) this.api.renderFinished.on(() => o.onReady!());
+    this.api.renderScore(song.score, tracksFor(song, part).map((t) => t.index));
+  }
+
+  setPart(part: GpPart) {
+    this.api.renderTracks(tracksFor(this.song, part));
+  }
+
+  /** Play/pause. False when playback isn't available (the single-file build has no audio worker). */
+  playPause(): boolean {
+    if (!this.api.isReadyForPlayback) return false;
+    this.api.playPause();
+    return true;
+  }
+
+  set speed(v: number) {
+    this.api.playbackSpeed = v;
+  }
+
+  destroy() {
+    try { this.api.stop(); } catch { /* not ready */ }
+    this.api.destroy();
+  }
+}

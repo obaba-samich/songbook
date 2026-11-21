@@ -9,13 +9,17 @@ import type { ViewCtx } from '../views/common';
 import { esc } from '../views/html';
 import { installTooltips } from './tooltip';
 import { TAB_HELP_HTML } from './tabHelp';
+import { defaultPart, GP_EXT, GpView, loadGp, partOptions, type GpPart, type GpSong } from './gpView';
 
 type View = 'tab' | 'chords' | 'lyrics';
 
 interface Entry {
   id: string;
   fileName: string;
-  result: ParseResult;
+  /** A .gsong file … */
+  result?: ParseResult;
+  /** … or a Guitar Pro file. */
+  gp?: GpSong;
   source: 'library' | 'loaded';
 }
 
@@ -49,7 +53,7 @@ function savePrefs(p: Prefs) {
 
 const baseName = (path: string) => path.split('/').pop() ?? path;
 
-export function startApp(root: HTMLElement, bundled: Record<string, string>): void {
+export function startApp(root: HTMLElement, bundled: Record<string, string>, gpFiles: Record<string, string> = {}): void {
   const prefs = loadPrefs();
   const entries: Entry[] = Object.entries(bundled).map(([path, text]) => ({
     id: 'lib:' + baseName(path),
@@ -62,6 +66,8 @@ export function startApp(root: HTMLElement, bundled: Record<string, string>): vo
   let search = '';
   let scrolling = false;
   let tabWidthOverride: number | null = null;
+  let gpView: GpView | null = null;
+  let gpPart: GpPart = 'guitars';
 
   root.innerHTML = `
   <div class="shell${prefs.sidebar ? '' : ' no-sidebar'}">
@@ -72,9 +78,9 @@ export function startApp(root: HTMLElement, bundled: Record<string, string>): vo
       </div>
       <ul class="song-list"></ul>
       <div class="lib-actions">
-        <label class="btn">Open .gsong<input type="file" class="file-in" accept=".gsong,text/plain" multiple hidden /></label>
+        <label class="btn">Open song file<input type="file" class="file-in" accept=".gsong,.gp,.gp3,.gp4,.gp5,.gpx,text/plain" multiple hidden /></label>
         <label class="btn">Open folder<input type="file" class="dir-in" webkitdirectory multiple hidden /></label>
-        <p class="muted small">…or drag a .gsong file onto the page.</p>
+        <p class="muted small">…or drag a .gsong or Guitar Pro file onto the page.</p>
       </div>
     </aside>
     <main class="main">
@@ -85,8 +91,8 @@ export function startApp(root: HTMLElement, bundled: Record<string, string>): vo
           <button data-view="chords" role="tab">Chords</button>
           <button data-view="lyrics" role="tab">Lyrics</button>
         </div>
-        <div class="tb-group" aria-label="Song">
-          <select class="guitar-sel" aria-label="Guitar part" title="Guitar part" hidden></select>
+        <select class="guitar-sel" aria-label="Guitar part" title="Guitar part" hidden></select>
+        <div class="tb-group key-capo" aria-label="Song">
           <span class="lbl" title="Transpose (changes the key)">Key</span>
           <button class="icon tr-down" aria-label="Transpose down" title="Transpose down">−</button>
           <button class="tr-val" title="Transpose amount — click to reset" aria-label="Transpose amount">0</button>
@@ -121,7 +127,7 @@ export function startApp(root: HTMLElement, bundled: Record<string, string>): vo
       ${TAB_HELP_HTML}
     </aside>
   </div>
-  <div class="drop-overlay" hidden>Drop .gsong files to open them</div>`;
+  <div class="drop-overlay" hidden>Drop .gsong or Guitar Pro files to open them</div>`;
 
   const $ = <T extends Element = HTMLElement>(sel: string) => root.querySelector(sel) as unknown as T;
   const shell = $('.shell');
@@ -152,22 +158,27 @@ export function startApp(root: HTMLElement, bundled: Record<string, string>): vo
   matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme);
 
   function title(e: Entry) {
-    return e.result.song.meta.title || e.fileName;
+    return (e.gp ? e.gp.title : e.result?.song.meta.title) || e.fileName;
   }
+  function artist(e: Entry) {
+    return (e.gp ? e.gp.artist : e.result?.song.meta.artist) || '';
+  }
+  const isDark = () => document.documentElement.dataset.theme === 'dark';
 
   function renderList() {
     const q = search.trim().toLowerCase();
     const items = entries
-      .filter((e) => !q || [title(e), e.result.song.meta.artist, e.fileName].some((s) => s.toLowerCase().includes(q)))
+      .filter((e) => !q || [title(e), artist(e), e.fileName].some((s) => s.toLowerCase().includes(q)))
       .sort((a, b) => title(a).localeCompare(title(b)));
     list.innerHTML = items.length
       ? items
           .map((e) => {
-            const errs = e.result.diagnostics.filter((d) => d.severity === 'error').length;
-            const warns = e.result.diagnostics.length - errs;
+            const ds = e.result?.diagnostics ?? [];
+            const errs = ds.filter((d) => d.severity === 'error').length;
+            const warns = ds.length - errs;
             const badge = errs ? `<span class="badge err" title="${errs} error(s)">${errs}</span>` : warns ? `<span class="badge warn" title="${warns} warning(s)">!</span>` : '';
             return `<li><button class="song-item${e === current ? ' active' : ''}" data-id="${esc(e.id)}">
-              <span class="t">${esc(title(e))}</span><span class="a">${esc(e.result.song.meta.artist || e.fileName)}</span>${badge}</button></li>`;
+              <span class="t">${esc(title(e))}</span><span class="a">${esc(artist(e) || e.fileName)}${e.gp ? ' <i class="gp-tag" title="Guitar Pro file: full tab">tab</i>' : ''}</span>${badge}</button></li>`;
           })
           .join('')
       : `<li class="muted small empty">${entries.length ? 'No songs match.' : 'No songs yet. Put .gsong files in songs/ or open one.'}</li>`;
@@ -181,12 +192,13 @@ export function startApp(root: HTMLElement, bundled: Record<string, string>): vo
   }
 
   function renderDiagnostics(e: Entry) {
+    if (!e.result) { diag.innerHTML = ''; return; }
     const ds = e.result.diagnostics;
     if (!ds.length) { diag.innerHTML = ''; return; }
     const errs = ds.filter((d) => d.severity === 'error');
     const warns = ds.filter((d) => d.severity === 'warning');
     const item = (d: (typeof ds)[number]) => {
-      const src = e.result.lines[d.line - 1];
+      const src = e.result!.lines[d.line - 1];
       return `<li class="${d.severity}"><b>Line ${d.line}</b> — ${esc(d.message)}${src !== undefined && src.trim() ? `<pre class="src"><span class="ln">${d.line} │</span> ${esc(src)}</pre>` : ''}</li>`;
     };
     diag.innerHTML = `
@@ -200,9 +212,15 @@ export function startApp(root: HTMLElement, bundled: Record<string, string>): vo
     article.style.fontSize = `${prefs.fontSize}px`;
     article.dataset.view = prefs.view;
     renderList();
-    if (!current || !settings) {
+    const gpMode = !!current?.gp;
+    root.querySelectorAll<HTMLButtonElement>('.view-switch button').forEach((b) => { b.disabled = gpMode && b.dataset.view !== 'tab'; });
+    $('.key-capo').hidden = gpMode;
+    if (!gpMode && gpView) { gpView.destroy(); gpView = null; }
+    if (current?.gp) { renderGp(current, current.gp); return; }
+    if (!current || !settings || !current.result) {
       diag.innerHTML = '';
-      article.innerHTML = `<div class="empty-state"><h1>Songbook</h1><p>Pick a song on the left, or drop a <code>.gsong</code> file here.</p></div>`;
+      guitarSel.hidden = true;
+      article.innerHTML = `<div class="empty-state"><h1>Songbook</h1><p>Pick a song on the left, or drop a <code>.gsong</code> or Guitar Pro file here.</p></div>`;
       return;
     }
     const song = current.result.song;
@@ -219,9 +237,35 @@ export function startApp(root: HTMLElement, bundled: Record<string, string>): vo
     document.title = `${song.meta.title || current.fileName} — Songbook`;
   }
 
+  /** Guitar Pro song: alphaTab draws it; only the Tab view exists. */
+  function renderGp(e: Entry, gp: GpSong) {
+    diag.innerHTML = '';
+    guitarSel.hidden = false;
+    guitarSel.innerHTML = partOptions(gp).map((o) => `<option value="${o.value}">${esc(o.label)}</option>`).join('');
+    guitarSel.value = String(gpPart);
+    document.title = `${gp.title} — Songbook`;
+    if (gpView && article.dataset.gp === e.id) return;
+    gpView?.destroy();
+    article.dataset.gp = e.id;
+    article.innerHTML = `<header class="song-head"><h1>${esc(gp.title)}</h1><p class="artist">${esc(gp.artist)}</p>
+      <p class="meta">${gp.score.tempo ? `${gp.score.tempo} BPM · ` : ''}Guitar Pro file · ▶ plays it with a cursor · click a note to start there</p></header>
+      <div class="gp-score"></div>`;
+    gpView = new GpView(article.querySelector<HTMLElement>('.gp-score')!, gp, gpPart, {
+      dark: isDark(), scale: prefs.fontSize / 20, showStringNames: prefs.showStringNames,
+      onPlayState: (p) => { scrollBtn.textContent = p ? '❚❚' : '▶'; },
+    });
+    gpView.speed = speedFactor();
+  }
+  const speedFactor = () => [0.25, 0.4, 0.5, 0.6, 0.75, 0.85, 1, 1.1, 1.25, 1.5][Number(speed.value) - 1] ?? 1;
+  /** Force alphaTab to redraw (theme, size or string-name change). */
+  function redrawGp() { if (gpView) { gpView.destroy(); gpView = null; render(); } }
+
   function select(e: Entry) {
+    if (gpView) { gpView.destroy(); gpView = null; }
+    delete article.dataset.gp;
     current = e;
-    settings = defaultSettings(e.result.song);
+    settings = e.result ? defaultSettings(e.result.song) : null;
+    if (e.gp) gpPart = defaultPart(e.gp);
     prefs.last = e.id;
     savePrefs(prefs);
     stopScroll();
@@ -229,17 +273,39 @@ export function startApp(root: HTMLElement, bundled: Record<string, string>): vo
     window.scrollTo(0, 0);
   }
 
+  function gpEntry(id: string, fileName: string, bytes: Uint8Array, source: Entry['source']): Entry | null {
+    try {
+      return { id, fileName, gp: loadGp(bytes, fileName), source };
+    } catch (err) {
+      diag.innerHTML = `<div class="diag-box err"><h3>Couldn't read ${esc(fileName)}</h3><p class="small">${esc(String((err as Error)?.message ?? err))}</p></div>`;
+      return null;
+    }
+  }
+
+  // Guitar Pro files from songs/ are fetched after start-up (they're binary).
+  for (const [path, url] of Object.entries(gpFiles)) {
+    fetch(url).then((r) => r.arrayBuffer()).then((buf) => {
+      const e = gpEntry('lib:' + baseName(path), baseName(path), new Uint8Array(buf), 'library');
+      if (!e) return;
+      entries.push(e);
+      if (!current && prefs.last === e.id) select(e); else renderList();
+    });
+  }
+
   function addFiles(files: File[]) {
-    const gs = files.filter((f) => f.name.toLowerCase().endsWith('.gsong'));
+    const gs = files.filter((f) => f.name.toLowerCase().endsWith('.gsong') || GP_EXT.test(f.name));
     if (!gs.length) {
-      diag.innerHTML = `<div class="diag-box err"><h3>No .gsong files found</h3><p class="small">Only files ending in .gsong can be opened.</p></div>`;
+      diag.innerHTML = `<div class="diag-box err"><h3>No song files found</h3><p class="small">Open files ending in .gsong, or Guitar Pro files (.gp, .gp5, .gpx…).</p></div>`;
       return;
     }
-    Promise.all(gs.map((f) => f.text().then((text) => ({ f, text })))).then((loaded) => {
+    Promise.all(gs.map((f) => (GP_EXT.test(f.name) ? f.arrayBuffer() : f.text()).then((data) => ({ f, data })))).then((loaded) => {
       let first: Entry | null = null;
-      for (const { f, text } of loaded) {
+      for (const { f, data } of loaded) {
         const id = 'file:' + ((f as File & { webkitRelativePath?: string }).webkitRelativePath || f.name);
-        const entry: Entry = { id, fileName: f.name, result: parseSong(text), source: 'loaded' };
+        const entry = typeof data === 'string'
+          ? { id, fileName: f.name, result: parseSong(data), source: 'loaded' as const }
+          : gpEntry(id, f.name, new Uint8Array(data), 'loaded');
+        if (!entry) continue;
         const idx = entries.findIndex((x) => x.id === id);
         if (idx >= 0) entries[idx] = entry; else entries.push(entry);
         first ??= entry;
@@ -274,6 +340,12 @@ export function startApp(root: HTMLElement, bundled: Record<string, string>): vo
     scrollBtn.setAttribute('aria-label', 'Start auto-scroll');
   }
 
+  /** ▶ / space: play a Guitar Pro song with its cursor; otherwise (or without audio) auto-scroll. */
+  function togglePlay() {
+    if (gpView && !scrolling && gpView.playPause()) return;
+    scrolling ? stopScroll() : startScroll();
+  }
+
   // ---- events ----
   root.addEventListener('click', (ev) => {
     const t = ev.target as HTMLElement;
@@ -282,13 +354,13 @@ export function startApp(root: HTMLElement, bundled: Record<string, string>): vo
     const vb = t.closest<HTMLElement>('.view-switch button');
     if (vb) { prefs.view = vb.dataset.view as View; savePrefs(prefs); render(); return; }
     if (!t.closest('.settings-menu')) menu.open = false;
-    if (!settings && !t.closest('.sidebar-toggle, .help-btn, .help-close, .fs-up, .fs-down')) return;
+    if (!settings && !t.closest('.sidebar-toggle, .help-btn, .help-close, .fs-up, .fs-down, .scroll-btn')) return;
     if (t.closest('.tr-up')) { settings!.transpose = Math.min(11, settings!.transpose + 1); render(); }
     else if (t.closest('.tr-down')) { settings!.transpose = Math.max(-11, settings!.transpose - 1); render(); }
     else if (t.closest('.tr-val')) { settings!.transpose = 0; render(); }
-    else if (t.closest('.fs-up')) { prefs.fontSize = Math.min(40, prefs.fontSize + 2); savePrefs(prefs); render(); }
-    else if (t.closest('.fs-down')) { prefs.fontSize = Math.max(12, prefs.fontSize - 2); savePrefs(prefs); render(); }
-    else if (t.closest('.scroll-btn')) { scrolling ? stopScroll() : startScroll(); }
+    else if (t.closest('.fs-up')) { prefs.fontSize = Math.min(40, prefs.fontSize + 2); savePrefs(prefs); redrawGp(); render(); }
+    else if (t.closest('.fs-down')) { prefs.fontSize = Math.max(12, prefs.fontSize - 2); savePrefs(prefs); redrawGp(); render(); }
+    else if (t.closest('.scroll-btn')) { togglePlay(); }
     else if (t.closest('.sidebar-toggle')) { prefs.sidebar = !prefs.sidebar; shell.classList.toggle('no-sidebar', !prefs.sidebar); savePrefs(prefs); render(); }
     else if (t.closest('.help-btn')) { helpPanel.hidden = !helpPanel.hidden; }
     else if (t.closest('.help-close')) { helpPanel.hidden = true; }
@@ -296,7 +368,13 @@ export function startApp(root: HTMLElement, bundled: Record<string, string>): vo
   });
   $('.search').addEventListener('input', (e) => { search = (e.target as HTMLInputElement).value; renderList(); });
   guitarSel.addEventListener('change', () => {
-    if (!current || !settings) return;
+    if (current?.gp && gpView) {
+      const v = guitarSel.value;
+      gpPart = v === 'guitars' || v === 'all' ? v : Number(v);
+      gpView.setPart(gpPart);
+      return;
+    }
+    if (!current?.result || !settings) return;
     if (guitarSel.value === 'all') { prefs.stacked = true; savePrefs(prefs); render(); return; }
     if (prefs.view === 'tab') { prefs.stacked = false; savePrefs(prefs); }
     const g = Number(guitarSel.value);
@@ -304,9 +382,9 @@ export function startApp(root: HTMLElement, bundled: Record<string, string>): vo
     render();
   });
   capoSel.addEventListener('change', () => { if (settings) { settings.capo = Number(capoSel.value); render(); } });
-  names.addEventListener('change', () => { prefs.showStringNames = names.checked; savePrefs(prefs); render(); });
-  speed.addEventListener('input', () => { prefs.speed = Number(speed.value); savePrefs(prefs); });
-  themeSel.addEventListener('change', () => { prefs.theme = themeSel.value as Prefs['theme']; savePrefs(prefs); applyTheme(); });
+  names.addEventListener('change', () => { prefs.showStringNames = names.checked; savePrefs(prefs); redrawGp(); render(); });
+  speed.addEventListener('input', () => { prefs.speed = Number(speed.value); savePrefs(prefs); if (gpView) gpView.speed = speedFactor(); });
+  themeSel.addEventListener('change', () => { prefs.theme = themeSel.value as Prefs['theme']; savePrefs(prefs); applyTheme(); redrawGp(); });
   perRowSel.addEventListener('change', () => { prefs.chartPerRow = Number(perRowSel.value); savePrefs(prefs); render(); });
   chartSizeSel.addEventListener('change', () => { prefs.chartSize = chartSizeSel.value as Prefs['chartSize']; savePrefs(prefs); render(); });
   $<HTMLInputElement>('.file-in').addEventListener('change', (e) => { const i = e.target as HTMLInputElement; addFiles([...(i.files ?? [])]); i.value = ''; });
@@ -325,11 +403,11 @@ export function startApp(root: HTMLElement, bundled: Record<string, string>): vo
   document.addEventListener('keydown', (e) => {
     const tag = (e.target as HTMLElement).tagName;
     if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
-    if (e.key === ' ' && current) { e.preventDefault(); scrolling ? stopScroll() : startScroll(); }
+    if (e.key === ' ' && current) { e.preventDefault(); togglePlay(); }
     if (e.key === 'Escape') helpPanel.hidden = true;
   });
   let resizeTimer = 0;
-  window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = window.setTimeout(() => prefs.view === 'tab' && render(), 150); });
+  window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = window.setTimeout(() => prefs.view === 'tab' && !gpView && render(), 150); });
 
   // Print: wrap tab to a fixed page width, restore afterwards.
   window.addEventListener('beforeprint', () => { stopScroll(); if (prefs.view === 'tab') { tabWidthOverride = 42; render(); } });
