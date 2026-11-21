@@ -34,6 +34,8 @@ guitars (stacked)**, or a single guitar or bass part. The tab only shows
 guitar-related parts (guitars and bass as tab, the vocal line as sheet music);
 the other instruments are still heard. **▶** plays the song with a cursor that
 follows the notes (click a note to start there; the slider sets the speed).
+The **🔊** menu next to it has a checkbox per instrument: untick one to
+silence it (e.g. play along without the guitar, or hear only the vocals).
 Playback needs `npm run dev`; the single-file build draws the tab and ▶
 auto-scrolls instead.
 

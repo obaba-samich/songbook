@@ -103,6 +103,9 @@ code { font-family: var(--mono); font-size: 0.92em; }
 .fs-val { min-width: 22px; text-align: center; font-variant-numeric: tabular-nums; color: var(--muted); }
 .menu-title { margin: 8px 0 2px; padding-top: 8px; border-top: 1px solid var(--line); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
 .speed { width: 56px; accent-color: var(--accent); }
+.mix-menu .menu-body { left: 0; right: auto; max-height: 70vh; overflow-y: auto; }
+.mix-menu .menu-title { margin-top: 0; padding-top: 0; border-top: 0; }
+.mix-menu input { accent-color: var(--accent); }
 
 .song { max-width: 1000px; margin: 0 auto; padding: 24px 28px 40vh; line-height: 1.4; }
 .empty-state { text-align: center; margin-top: 15vh; color: var(--muted); }

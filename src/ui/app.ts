@@ -9,7 +9,7 @@ import type { ViewCtx } from '../views/common';
 import { esc } from '../views/html';
 import { installTooltips } from './tooltip';
 import { TAB_HELP_HTML } from './tabHelp';
-import { defaultPart, GP_EXT, GpView, loadGp, parsePart, partOptions, type GpPart, type GpSong } from './gpView';
+import { defaultPart, GP_EXT, GpView, loadGp, parsePart, partOptions, playableTracks, type GpPart, type GpSong } from './gpView';
 
 type View = 'tab' | 'chords' | 'lyrics';
 
@@ -68,6 +68,9 @@ export function startApp(root: HTMLElement, bundled: Record<string, string>, gpF
   let tabWidthOverride: number | null = null;
   let gpView: GpView | null = null;
   let gpPart: GpPart = 'guitars';
+  /** Per Guitar Pro song: track indexes switched off in the "instruments that play" menu. */
+  const mutes = new Map<string, Set<number>>();
+  const mutedFor = (id: string) => { let m = mutes.get(id); if (!m) mutes.set(id, (m = new Set())); return m; };
 
   root.innerHTML = `
   <div class="shell${prefs.sidebar ? '' : ' no-sidebar'}">
@@ -103,6 +106,10 @@ export function startApp(root: HTMLElement, bundled: Record<string, string>, gpF
         <div class="tb-group" aria-label="Auto-scroll">
           <button class="icon scroll-btn" aria-label="Start auto-scroll" title="Auto-scroll (space)">▶</button>
           <input type="range" class="speed" min="1" max="10" step="1" aria-label="Scroll speed" title="Scroll speed" />
+          <details class="menu mix-menu" hidden>
+            <summary class="icon" title="Instruments that play" aria-label="Instruments that play">🔊</summary>
+            <div class="menu-body"><div class="menu-title">Instruments that play</div><div class="mix-list"></div></div>
+          </details>
         </div>
         <span class="tb-spacer"></span>
         <details class="menu settings-menu">
@@ -146,6 +153,8 @@ export function startApp(root: HTMLElement, bundled: Record<string, string>, gpF
   const perRowSel = $<HTMLSelectElement>('.perrow-sel');
   const chartSizeSel = $<HTMLSelectElement>('.chartsize-sel');
   const menu = $<HTMLDetailsElement>('.settings-menu');
+  const mixMenu = $<HTMLDetailsElement>('.mix-menu');
+  const mixList = $('.mix-list');
   themeSel.value = prefs.theme;
   perRowSel.value = String(prefs.chartPerRow);
   chartSizeSel.value = prefs.chartSize;
@@ -216,6 +225,7 @@ export function startApp(root: HTMLElement, bundled: Record<string, string>, gpF
     const gpMode = !!current?.gp && (prefs.view === 'tab' || !current.result);
     root.querySelectorAll<HTMLButtonElement>('.view-switch button').forEach((b) => { b.disabled = !!current?.gp && !current.result && b.dataset.view !== 'tab'; });
     $('.key-capo').hidden = gpMode;
+    mixMenu.hidden = !gpMode;
     if (!gpMode && gpView) { gpView.destroy(); gpView = null; }
     if (gpMode) { renderGp(current!, current!.gp!); return; }
     delete article.dataset.gp;
@@ -246,6 +256,8 @@ export function startApp(root: HTMLElement, bundled: Record<string, string>, gpF
     guitarSel.innerHTML = partOptions(gp).map((o) => `<option value="${o.value}">${esc(o.label)}</option>`).join('');
     guitarSel.value = String(gpPart);
     document.title = `${gp.title} — Songbook`;
+    const muted = mutedFor(e.id);
+    mixList.innerHTML = playableTracks(gp).map((t) => `<label class="menu-row"><span>${esc(t.label)}</span><input type="checkbox" data-track="${t.index}"${muted.has(t.index) ? '' : ' checked'} /></label>`).join('');
     if (gpView && article.dataset.gp === e.id) return;
     gpView?.destroy();
     article.dataset.gp = e.id;
@@ -253,7 +265,7 @@ export function startApp(root: HTMLElement, bundled: Record<string, string>, gpF
       <p class="meta">${gp.score.tempo ? `${gp.score.tempo} BPM · ` : ''}Guitar Pro file · ▶ plays it with a cursor · click a note to start there</p></header>
       <div class="gp-score"></div>`;
     gpView = new GpView(article.querySelector<HTMLElement>('.gp-score')!, gp, gpPart, {
-      dark: isDark(), scale: prefs.fontSize / 20, showStringNames: prefs.showStringNames,
+      dark: isDark(), scale: prefs.fontSize / 20, showStringNames: prefs.showStringNames, muted,
       onPlayState: (p) => { scrollBtn.textContent = p ? '❚❚' : '▶'; },
     });
     gpView.speed = speedFactor();
@@ -366,6 +378,7 @@ export function startApp(root: HTMLElement, bundled: Record<string, string>, gpF
     const vb = t.closest<HTMLElement>('.view-switch button');
     if (vb) { prefs.view = vb.dataset.view as View; savePrefs(prefs); render(); return; }
     if (!t.closest('.settings-menu')) menu.open = false;
+    if (!t.closest('.mix-menu')) mixMenu.open = false;
     if (!settings && !t.closest('.sidebar-toggle, .help-btn, .help-close, .fs-up, .fs-down, .scroll-btn')) return;
     if (t.closest('.tr-up')) { settings!.transpose = Math.min(11, settings!.transpose + 1); render(); }
     else if (t.closest('.tr-down')) { settings!.transpose = Math.max(-11, settings!.transpose - 1); render(); }
@@ -377,6 +390,14 @@ export function startApp(root: HTMLElement, bundled: Record<string, string>, gpF
     else if (t.closest('.help-btn')) { helpPanel.hidden = !helpPanel.hidden; }
     else if (t.closest('.help-close')) { helpPanel.hidden = true; }
     else if (t.closest('.print-btn')) { window.print(); }
+  });
+  mixList.addEventListener('change', (ev) => {
+    const box = ev.target as HTMLInputElement;
+    if (!current?.gp || box.dataset.track === undefined) return;
+    const i = Number(box.dataset.track);
+    const muted = mutedFor(current.id);
+    if (box.checked) muted.delete(i); else muted.add(i);
+    gpView?.setMuted(i, !box.checked);
   });
   $('.search').addEventListener('input', (e) => { search = (e.target as HTMLInputElement).value; renderList(); });
   guitarSel.addEventListener('change', () => {

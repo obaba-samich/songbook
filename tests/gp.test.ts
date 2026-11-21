@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { defaultPart, isBass, isGuitar, lyricTracks, partOptions, trackName } from '../src/ui/gpView';
+import { defaultPart, isBass, isGuitar, lyricTracks, partOptions, playableTracks, trackName } from '../src/ui/gpView';
 
 // Minimal stand-ins for alphaTab tracks (real Guitar Pro files can't live in the public repo).
 const track = (name: string, o: { strings?: number; perc?: boolean; stringed?: boolean; lyrics?: boolean; index?: number } = {}) => ({
@@ -45,5 +45,18 @@ describe('Guitar Pro tracks', () => {
     const s = song(track('Acoustic Guitar 1', { index: 0 }), track('Acoustic Guitar 2', { index: 1 }));
     expect(defaultPart(s)).toBe('guitars');
     expect(partOptions(s).some((o) => o.value === 'sing')).toBe(false);
+  });
+
+  it('tab picker offers guitar-related parts only; every part can still play', () => {
+    const s = song(
+      track('Vocals - Cello', { lyrics: true, index: 0 }),
+      track('Rhythm Guitar - Acoustic Guitar (steel)', { index: 1 }),
+      track('Lead Guitar - Electric Guitar (clean)', { index: 2 }),
+      track('Bass - Electric Bass (finger)', { strings: 4, index: 3 }),
+      track('Fiddle - Fiddle', { index: 4 }),
+      track('Drums', { perc: true, index: 5 }),
+    );
+    expect(partOptions(s).map((o) => o.value)).toEqual(['sing', 'guitars', '1', '2', '3']);
+    expect(playableTracks(s).map((t) => t.label)).toEqual(['Vocals', 'Rhythm Guitar', 'Lead Guitar', 'Bass', 'Fiddle', 'Drums']);
   });
 });

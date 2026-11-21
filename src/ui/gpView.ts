@@ -102,6 +102,11 @@ export function partOptions(song: GpSong): { value: string; label: string }[] {
   return opts;
 }
 
+/** Every part, for the "instruments that play" checkboxes. */
+export function playableTracks(song: GpSong): { index: number; label: string }[] {
+  return song.score.tracks.map((t) => ({ index: t.index, label: trackName(t) }));
+}
+
 export function defaultPart(song: GpSong): GpPart {
   const guitars = song.score.tracks.filter(isGuitar);
   if (guitars.length && lyricTracks(song.score.tracks).length) return 'sing';
@@ -121,6 +126,8 @@ export interface GpViewOptions {
   /** 1 = default size. */
   scale: number;
   showStringNames: boolean;
+  /** Track indexes that stay silent during playback. */
+  muted?: ReadonlySet<number>;
   onPlayState?: (playing: boolean) => void;
   onReady?: () => void;
 }
@@ -134,10 +141,12 @@ const COLORS = {
 export class GpView {
   private api: alphaTab.AlphaTabApi;
   private song: GpSong;
+  private muted: Set<number>;
   playing = false;
 
   constructor(el: HTMLElement, song: GpSong, part: GpPart, o: GpViewOptions) {
     this.song = song;
+    this.muted = new Set(o.muted ?? []);
     const c = o.dark ? COLORS.dark : COLORS.light;
     const settings = {
       core: {
@@ -181,6 +190,19 @@ export class GpView {
     this.api.renderScore(song.score, tracksFor(song, part).map((t) => t.index));
   }
 
+  /** Turn one instrument's sound on or off (the tab shown doesn't change). */
+  setMuted(index: number, muted: boolean) {
+    if (muted) this.muted.add(index); else this.muted.delete(index);
+    const t = this.song.score.tracks[index];
+    if (t) this.api.changeTrackMute([t], muted);
+  }
+
+  private applyMutes() {
+    const tracks = this.song.score.tracks;
+    this.api.changeTrackMute(tracks.filter((t) => !this.muted.has(t.index)), false);
+    this.api.changeTrackMute(tracks.filter((t) => this.muted.has(t.index)), true);
+  }
+
   setPart(part: GpPart) {
     this.api.renderTracks(tracksFor(this.song, part));
   }
@@ -188,6 +210,8 @@ export class GpView {
   /** Play/pause. False when playback isn't available (the single-file build has no audio worker). */
   playPause(): boolean {
     if (!this.api.isReadyForPlayback) return false;
+    // Re-sent on every start: mutes set before the audio loaded don't stick (and alphaTab 1.8.4's midiLoaded event recurses forever).
+    this.applyMutes();
     this.api.playPause();
     return true;
   }
