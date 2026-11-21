@@ -27,10 +27,12 @@ interface Prefs {
   speed: number;
   last: string | null;
   sidebar: boolean;
+  chartPerRow: number;
+  chartSize: 's' | 'm' | 'l';
 }
 
 const PREFS_KEY = 'songbook.prefs.v1';
-const DEFAULT_PREFS: Prefs = { view: 'lyrics', fontSize: 20, theme: 'system', showStringNames: true, speed: 4, last: null, sidebar: true };
+const DEFAULT_PREFS: Prefs = { view: 'lyrics', fontSize: 20, theme: 'system', showStringNames: true, speed: 4, last: null, sidebar: true, chartPerRow: 8, chartSize: 'm' };
 
 function loadPrefs(): Prefs {
   try {
@@ -77,30 +79,37 @@ export function startApp(root: HTMLElement, bundled: Record<string, string>): vo
       <div class="toolbar" role="toolbar" aria-label="Song controls">
         <button class="icon sidebar-toggle" title="Show/hide song list" aria-label="Show or hide song list">☰</button>
         <div class="seg-ctl view-switch" role="tablist" aria-label="View">
-          <button data-view="tab" role="tab">Tablature</button>
+          <button data-view="tab" role="tab">Tab</button>
           <button data-view="chords" role="tab">Chords</button>
-          <button data-view="lyrics" role="tab">Lyrics + Chords</button>
+          <button data-view="lyrics" role="tab">Lyrics</button>
         </div>
-        <label class="ctl guitar-ctl" hidden>Guitar <select class="guitar-sel" aria-label="Guitar part"></select></label>
-        <div class="ctl" aria-label="Transpose">
-          <span class="lbl">Transpose</span>
-          <button class="icon tr-down" aria-label="Transpose down">−</button>
-          <button class="tr-val" title="Reset transpose" aria-label="Transpose amount">0</button>
-          <button class="icon tr-up" aria-label="Transpose up">+</button>
+        <div class="tb-group" aria-label="Song">
+          <select class="guitar-sel" aria-label="Guitar part" title="Guitar part" hidden></select>
+          <span class="lbl" title="Transpose (changes the key)">Key</span>
+          <button class="icon tr-down" aria-label="Transpose down" title="Transpose down">−</button>
+          <button class="tr-val" title="Transpose amount — click to reset" aria-label="Transpose amount">0</button>
+          <button class="icon tr-up" aria-label="Transpose up" title="Transpose up">+</button>
+          <span class="lbl">Capo</span>
+          <select class="capo-sel" aria-label="Capo">${Array.from({ length: 13 }, (_, i) => `<option value="${i}">${i || '–'}</option>`).join('')}</select>
         </div>
-        <label class="ctl">Capo <select class="capo-sel" aria-label="Capo">${Array.from({ length: 13 }, (_, i) => `<option value="${i}">${i || 'none'}</option>`).join('')}</select></label>
-        <div class="ctl" aria-label="Font size">
-          <button class="icon fs-down" aria-label="Smaller text">A−</button>
-          <button class="icon fs-up" aria-label="Bigger text">A+</button>
-        </div>
-        <div class="ctl" aria-label="Auto-scroll">
-          <button class="scroll-btn" aria-label="Start auto-scroll">▶ Scroll</button>
+        <div class="tb-group" aria-label="Auto-scroll">
+          <button class="icon scroll-btn" aria-label="Start auto-scroll" title="Auto-scroll (space)">▶</button>
           <input type="range" class="speed" min="1" max="10" step="1" aria-label="Scroll speed" title="Scroll speed" />
         </div>
-        <label class="ctl names-ctl"><input type="checkbox" class="names" /> String names</label>
-        <button class="help-btn">How to read tab</button>
-        <button class="icon theme-btn" title="Light / dark theme" aria-label="Toggle theme">◐</button>
-        <button class="print-btn">Print</button>
+        <span class="tb-spacer"></span>
+        <details class="menu settings-menu">
+          <summary class="icon" title="Display settings" aria-label="Display settings">⚙</summary>
+          <div class="menu-body">
+            <div class="menu-row"><span>Text size</span><span class="menu-ctl"><button class="icon fs-down" aria-label="Smaller text">A−</button><span class="fs-val"></span><button class="icon fs-up" aria-label="Bigger text">A+</button></span></div>
+            <label class="menu-row"><span>Theme</span><select class="theme-sel"><option value="system">System</option><option value="light">Light</option><option value="dark">Dark</option></select></label>
+            <label class="menu-row"><span>String names on tab</span><input type="checkbox" class="names" /></label>
+            <div class="menu-title">Chord chart</div>
+            <label class="menu-row"><span>Bars per row</span><select class="perrow-sel"><option value="0">Per line</option><option value="4">4</option><option value="6">6</option><option value="8">8</option><option value="12">12</option><option value="16">16</option></select></label>
+            <label class="menu-row"><span>Size</span><select class="chartsize-sel"><option value="s">Small</option><option value="m">Medium</option><option value="l">Large</option></select></label>
+          </div>
+        </details>
+        <button class="icon help-btn" title="How to read tab" aria-label="How to read tab">?</button>
+        <button class="icon print-btn" title="Print" aria-label="Print">⎙</button>
       </div>
       <div class="diagnostics" aria-live="polite"></div>
       <article class="song"></article>
@@ -125,6 +134,13 @@ export function startApp(root: HTMLElement, bundled: Record<string, string>): vo
 
   speed.value = String(prefs.speed);
   names.checked = prefs.showStringNames;
+  const themeSel = $<HTMLSelectElement>('.theme-sel');
+  const perRowSel = $<HTMLSelectElement>('.perrow-sel');
+  const chartSizeSel = $<HTMLSelectElement>('.chartsize-sel');
+  const menu = $<HTMLDetailsElement>('.settings-menu');
+  themeSel.value = prefs.theme;
+  perRowSel.value = String(prefs.chartPerRow);
+  chartSizeSel.value = prefs.chartSize;
 
   function applyTheme() {
     const t = prefs.theme === 'system' ? (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : prefs.theme;
@@ -178,7 +194,7 @@ export function startApp(root: HTMLElement, bundled: Record<string, string>): vo
 
   function render() {
     root.querySelectorAll<HTMLButtonElement>('.view-switch button').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.view === prefs.view)));
-    $('.names-ctl').toggleAttribute('hidden', prefs.view !== 'tab');
+    $('.fs-val').textContent = String(prefs.fontSize);
     article.style.fontSize = `${prefs.fontSize}px`;
     article.dataset.view = prefs.view;
     renderList();
@@ -188,13 +204,13 @@ export function startApp(root: HTMLElement, bundled: Record<string, string>): vo
       return;
     }
     const song = current.result.song;
-    $('.guitar-ctl').toggleAttribute('hidden', song.guitars.length < 2);
+    guitarSel.hidden = song.guitars.length < 2;
     guitarSel.innerHTML = song.guitars.map((g, i) => `<option value="${i}">${esc(g.name)}</option>`).join('');
     guitarSel.value = String(settings.guitar);
     capoSel.value = String(settings.capo);
     $('.tr-val').textContent = settings.transpose > 0 ? `+${settings.transpose}` : String(settings.transpose);
     renderDiagnostics(current);
-    const ctx: ViewCtx = { song, settings, showStringNames: prefs.showStringNames, tabWidthEm: measureTabWidth() };
+    const ctx: ViewCtx = { song, settings, showStringNames: prefs.showStringNames, tabWidthEm: measureTabWidth(), chartPerRow: prefs.chartPerRow, chartSize: prefs.chartSize };
     article.innerHTML = prefs.view === 'tab' ? renderTabView(ctx) : prefs.view === 'chords' ? renderChordsView(ctx) : renderLyricsView(ctx);
     document.title = `${song.meta.title || current.fileName} — Songbook`;
   }
@@ -244,13 +260,13 @@ export function startApp(root: HTMLElement, bundled: Record<string, string>): vo
   }
   function startScroll() {
     scrolling = true; last = 0; carry = 0;
-    scrollBtn.textContent = '❚❚ Pause';
+    scrollBtn.textContent = '❚❚';
     scrollBtn.setAttribute('aria-label', 'Pause auto-scroll');
     requestAnimationFrame(step);
   }
   function stopScroll() {
     scrolling = false;
-    scrollBtn.textContent = '▶ Scroll';
+    scrollBtn.textContent = '▶';
     scrollBtn.setAttribute('aria-label', 'Start auto-scroll');
   }
 
@@ -261,7 +277,8 @@ export function startApp(root: HTMLElement, bundled: Record<string, string>): vo
     if (item) { const e = entries.find((x) => x.id === item.dataset.id); if (e) select(e); return; }
     const vb = t.closest<HTMLElement>('.view-switch button');
     if (vb) { prefs.view = vb.dataset.view as View; savePrefs(prefs); render(); return; }
-    if (!settings && !t.closest('.sidebar-toggle, .theme-btn, .help-btn, .help-close, .fs-up, .fs-down')) return;
+    if (!t.closest('.settings-menu')) menu.open = false;
+    if (!settings && !t.closest('.sidebar-toggle, .help-btn, .help-close, .fs-up, .fs-down')) return;
     if (t.closest('.tr-up')) { settings!.transpose = Math.min(11, settings!.transpose + 1); render(); }
     else if (t.closest('.tr-down')) { settings!.transpose = Math.max(-11, settings!.transpose - 1); render(); }
     else if (t.closest('.tr-val')) { settings!.transpose = 0; render(); }
@@ -269,10 +286,6 @@ export function startApp(root: HTMLElement, bundled: Record<string, string>): vo
     else if (t.closest('.fs-down')) { prefs.fontSize = Math.max(12, prefs.fontSize - 2); savePrefs(prefs); render(); }
     else if (t.closest('.scroll-btn')) { scrolling ? stopScroll() : startScroll(); }
     else if (t.closest('.sidebar-toggle')) { prefs.sidebar = !prefs.sidebar; shell.classList.toggle('no-sidebar', !prefs.sidebar); savePrefs(prefs); render(); }
-    else if (t.closest('.theme-btn')) {
-      const now = document.documentElement.dataset.theme;
-      prefs.theme = now === 'dark' ? 'light' : 'dark'; savePrefs(prefs); applyTheme();
-    }
     else if (t.closest('.help-btn')) { helpPanel.hidden = !helpPanel.hidden; }
     else if (t.closest('.help-close')) { helpPanel.hidden = true; }
     else if (t.closest('.print-btn')) { window.print(); }
@@ -287,6 +300,9 @@ export function startApp(root: HTMLElement, bundled: Record<string, string>): vo
   capoSel.addEventListener('change', () => { if (settings) { settings.capo = Number(capoSel.value); render(); } });
   names.addEventListener('change', () => { prefs.showStringNames = names.checked; savePrefs(prefs); render(); });
   speed.addEventListener('input', () => { prefs.speed = Number(speed.value); savePrefs(prefs); });
+  themeSel.addEventListener('change', () => { prefs.theme = themeSel.value as Prefs['theme']; savePrefs(prefs); applyTheme(); });
+  perRowSel.addEventListener('change', () => { prefs.chartPerRow = Number(perRowSel.value); savePrefs(prefs); render(); });
+  chartSizeSel.addEventListener('change', () => { prefs.chartSize = chartSizeSel.value as Prefs['chartSize']; savePrefs(prefs); render(); });
   $<HTMLInputElement>('.file-in').addEventListener('change', (e) => { const i = e.target as HTMLInputElement; addFiles([...(i.files ?? [])]); i.value = ''; });
   $<HTMLInputElement>('.dir-in').addEventListener('change', (e) => { const i = e.target as HTMLInputElement; addFiles([...(i.files ?? [])]); i.value = ''; });
 
