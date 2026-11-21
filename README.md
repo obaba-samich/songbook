@@ -23,11 +23,14 @@ reloads the page). Any other `.gsong` can be opened with **Open .gsong**,
 
 ## Views
 
-- **Tablature** — engraved tab staff (Guitar Pro style): string lines, fret
-  numbers on the strings, measure numbers, chord names, P.M./let ring, slurs,
-  slides, bend arrows, vibrato; rows are justified to the page width. Hover/tap any number or symbol for an explanation; toggle string
-  names; **How to read tab** explains everything. Sections without tab show
-  their chords.
+- **Tablature** — the whole song as one continuous tab score, like a printed
+  tab book: string lines, fret numbers on the strings, measure numbers,
+  section names over the bars, chord names, P.M./let ring, slurs, slides,
+  bends, vibrato, pick strokes (⊓ down, V up), rhythm stems and beams, and
+  lyrics under the notes. Sections without written tab are generated from
+  their chords + strum pattern using the selected guitar's chord shapes.
+  Hover/tap any number or symbol for an explanation; toggle string names;
+  **How to read tab** explains everything.
 - **Chords** — each section once, its progression and strum pattern
   (↓ ↑, rests as gaps, ‖: :‖ ×4), then chord diagrams and the song order.
 - **Lyrics + Chords** — chords above the exact syllable, strum at the start of

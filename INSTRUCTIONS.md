@@ -238,8 +238,22 @@ E|0-0-0-0-0-0-|
 {end_tab}
 ```
 
-A section can have lyrics, tab, or both. Sections without tab show their chords
-in the Tablature view instead.
+A section can have lyrics, tab, or both. **A section without tab is still
+drawn as tab:** the app turns its chords and strum pattern into stacked notes
+(using the guitar's chord shapes), writes the rhythm under the staff and puts
+the lyrics under the notes. For that to come out right:
+
+- Give each section a `{use:}` whose repeat count is the **number of bars**
+  (one pattern = one bar), e.g. a 4-line verse of 4 bars each → `{use: main x16}`.
+- Treat **each lyric line as one phrase**: the bars are shared equally between
+  the lines, and each chord on a line gets whole bars when there are enough
+  (two chords on a 4-bar line → 2 bars each). Extra chords on a line split
+  its bars on the beat.
+- Put the chord exactly where it changes (`A[G]mazing`) — the lyrics are
+  spread over the strums of that chord.
+
+Only write `{tab}` for parts that aren't plain strummed chords: riffs,
+melodies, arpeggios, solos.
 
 ## 7. Sections and song order
 
@@ -421,7 +435,8 @@ Go through each item and fix the file if any fails:
    exactly 6 fret values (lowest string first) and an optional `fingers` list of
    6.
 3. Every `{use:}` is inside a section and names a pattern defined with
-   `{strum:}`. Strum patterns contain only `D`, `U`, `-`, `X`.
+   `{strum:}`. Strum patterns contain only `D`, `U`, `-`, `X`, one bar per
+   pattern, and the `xN` count equals the number of bars in the section.
 4. **Every section in `{order:}` exists** as a `{section:}` (spelling matches),
    and there is only one `{order:}`.
 5. No two sections have the same name.
