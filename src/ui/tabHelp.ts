@@ -9,7 +9,7 @@ import { lookupChord } from '../core/library';
 
 
 const svg = (w: number, h: number, body: string) =>
-  `<svg class="help-icon" viewBox="0 0 ${w} ${h}" width="${Math.round(w * 1.5)}" height="${Math.round(h * 1.5)}" aria-hidden="true">${body}</svg>`;
+  `<svg class="help-icon" viewBox="0 0 ${w} ${h}" width="${Math.round(w * 1.15)}" height="${Math.round(h * 1.15)}" aria-hidden="true">${body}</svg>`;
 const strings = (w: number, ys: number[]) => ys.map((y) => `<line class="st-line" x1="0" y1="${y}" x2="${w}" y2="${y}"/>`).join('');
 const note = (x: number, y: number, t: string) => {
   const w = t.length * 6.8 + 3;
