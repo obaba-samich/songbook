@@ -14,7 +14,7 @@ import { displayChord, shapeFor } from './transpose';
 const HEADER_ONLY = ['title', 'artist', 'key', 'capo', 'tempo', 'time', 'tuning'] as const;
 /** Header directives that may be set again inside a {guitar:} block. */
 const PER_GUITAR = ['capo', 'tuning', 'define'];
-const KNOWN = [...HEADER_ONLY, 'comment', 'c', 'define', 'strum', 'guitar', 'section', 'use', 'tab', 'end_tab', 'order'];
+const KNOWN = [...HEADER_ONLY, 'comment', 'c', 'define', 'strum', 'pick', 'guitar', 'section', 'use', 'tab', 'end_tab', 'order'];
 
 interface GuitarDraft {
   name: string;
@@ -225,6 +225,7 @@ export function parseSong(text: string): ParseResult {
         break;
       case 'define': parseDefine(value, n, scope ? scope.own : song.defines, error); break;
       case 'strum': parseStrum(value, n, song, error); break;
+      case 'pick': parsePick(value, n, song, error); break;
       case 'section': {
         finalizeGuitars();
         current = song.guitars[0].id;
@@ -308,7 +309,7 @@ export function parseSong(text: string): ParseResult {
   const patternNames = [...song.strums.keys()];
   for (const ref of strumUses) {
     if (!song.strums.has(ref.name))
-      error(ref.line, `strum pattern "${ref.name}" isn't defined${suggest(ref.name, patternNames)} — add {strum: ${ref.name} = D - D U - U D U} to the header`);
+      error(ref.line, `pattern "${ref.name}" isn't defined${suggest(ref.name, patternNames)} — add {strum: ${ref.name} = D - D U - U D U} (or a {pick:} pattern) to the header`);
   }
 
   const sectionNames = [...song.sections.values()].map((s) => s.name);
@@ -436,6 +437,28 @@ function parseStrum(value: string, n: number, song: Song, error: (l: number, m: 
   }
   if (song.strums.has(name)) { error(n, `strum pattern "${name}" is defined twice (first on line ${song.strums.get(name)!.line})`); return; }
   song.strums.set(name, { name, strokes, line: n });
+}
+
+const PICK_TOKEN = /^(B|A|[1-6])(\+(B|A|[1-6]))*$/;
+
+function parsePick(value: string, n: number, song: Song, error: (l: number, m: string) => void) {
+  const m = /^([A-Za-z0-9_-]+)\s*=\s*(.*)$/.exec(value);
+  if (!m) { error(n, 'expected {pick: name = B 3 A 2 B 1 A 2} (a one-word name, "=", then the strings to pick)'); return; }
+  const [, name, body] = m;
+  const toks = body.split(/\s+/).filter(Boolean);
+  if (!toks.length) { error(n, `picking pattern "${name}" has no notes`); return; }
+  const picks: string[][] = [];
+  for (const t of toks) {
+    const u = t.toUpperCase();
+    if (u === '-') { picks.push([]); continue; }
+    if (!PICK_TOKEN.test(u)) {
+      error(n, `pick "${t}" in pattern "${name}" isn't valid — use B (bass string), A (alternate bass), 1-6 (string number, 1 = thinnest), - (rest), or join with + to pick together (B+1)`);
+      return;
+    }
+    picks.push(u.split('+'));
+  }
+  if (song.strums.has(name)) { error(n, `pattern "${name}" is defined twice (first on line ${song.strums.get(name)!.line})`); return; }
+  song.strums.set(name, { name, strokes: picks.map((p) => (p.length ? 'D' : '-')), picks, line: n });
 }
 
 /** A string-name label: a note name directly followed by a bar line ("e|", "Eb |"). */

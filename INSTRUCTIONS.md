@@ -154,6 +154,29 @@ Inside a section, say which pattern to play and how many times:
 - `x4` = four times (repeat marker shown as ‖: … :‖ ×4). No count = once.
 - `{use:}` must be inside a section and refer to a defined pattern.
 
+### Fingerpicking patterns: `{pick:}`
+
+For songs that are picked, not strummed, define a picking pattern instead.
+`{use:}` works the same way, and the app writes out the picked notes as tab
+from each chord's shape:
+
+```
+{pick: travis = B 3 A 2 B 1 A 2}
+{pick: arp = B 3 2 1 2 3 A 3}
+{pick: pinch = B+1 3 A 2 B+1 3 A 2}
+```
+
+- One token per subdivision, exactly like strum strokes (8 = eighth notes in 4/4).
+- `B` = thumb on the chord's bass string (its lowest sounding string).
+- `A` = alternate bass: string 4 when the bass is on string 6, otherwise the
+  next sounding string up (Travis picking alternates `B` and `A`).
+- `1`–`6` = string number, **1 = thinnest** (high e), 6 = thickest.
+- `+` picks strings together: `B+1` is a pinch. `-` = rest (let it ring).
+- A string the chord shape mutes is skipped.
+- Strum and pick pattern names share one list, so they must all be unique.
+- When the real part has hammer-ons, slides or a melody, write it as a
+  `{tab}` block instead — a pattern only plays chord tones.
+
 ## 6. Tab blocks
 
 Tab goes inside a section between `{tab}` and `{end_tab}`:
@@ -435,7 +458,8 @@ Go through each item and fix the file if any fails:
    exactly 6 fret values (lowest string first) and an optional `fingers` list of
    6.
 3. Every `{use:}` is inside a section and names a pattern defined with
-   `{strum:}`. Strum patterns contain only `D`, `U`, `-`, `X`, one bar per
+   `{strum:}` or `{pick:}`. Strum patterns contain only `D`, `U`, `-`, `X`;
+   pick patterns only `B`, `A`, `1`–`6`, `+` and `-`; one bar per
    pattern, and the `xN` count equals the number of bars in the section.
 4. **Every section in `{order:}` exists** as a `{section:}` (spelling matches),
    and there is only one `{order:}`.
@@ -451,7 +475,7 @@ Go through each item and fix the file if any fails:
    saying so and which part.
 10. The file uses only directives from this document: `title`, `artist`, `key`,
     `capo`, `tempo`, `time`, `tuning`, `comment`/`c`, `define`, `strum`,
-    `section`, `use`, `tab`, `end_tab`, `order`, `guitar`.
+    `pick`, `section`, `use`, `tab`, `end_tab`, `order`, `guitar`.
 11. If there are several guitars: each is declared in the header, every
     `{guitar: X}` / `{tab: X}` inside a section names a declared guitar, each
     guitar's `{define:}` uses the chord name that guitar sees at its own capo,

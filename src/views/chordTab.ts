@@ -39,7 +39,32 @@ export function barTicks(time: string): number {
   return Math.round((beats * 16) / (unit || 4)) || 16;
 }
 
-export interface Slot { bar: number; stroke: Stroke; ticks: number; /** Strum pattern name ('' when none was given). */ pattern: string }
+export interface Slot {
+  bar: number; stroke: Stroke; ticks: number;
+  /** Strum pattern name ('' when none was given). */
+  pattern: string;
+  /** Fingerpicking: strings picked on this slot (see StrumPattern.picks). */
+  pick?: string[];
+}
+
+/**
+ * Strings (low-first index) a picking slot plays on a chord shape.
+ * B = lowest sounding string; A = alternate bass (string 4 when the bass is
+ * on 6, else the next sounding string up); numbers are string numbers, 1 = thinnest.
+ */
+export function pickStrings(pick: string[], frets: (number | null)[]): number[] {
+  const n = frets.length;
+  const sounding = frets.map((f, i) => (f === null ? -1 : i)).filter((i) => i >= 0);
+  if (!sounding.length) return [];
+  const bass = sounding[0];
+  const alt = bass === 0 && n >= 6 && frets[2] !== null ? 2 : sounding.find((i) => i > bass) ?? bass;
+  const out = new Set<number>();
+  for (const t of pick) {
+    const i = t === 'B' ? bass : t === 'A' ? alt : n - Number(t);
+    if (i >= 0 && i < n && frets[i] !== null) out.add(i);
+  }
+  return [...out].sort((a, b) => a - b);
+}
 
 /** Strum strokes for the section, one bar per pattern repeat. */
 export function strumBars(section: Section, ctx: ViewCtx, chords: number): Slot[][] {
@@ -52,7 +77,7 @@ export function strumBars(section: Section, ctx: ViewCtx, chords: number): Slot[
     const p = song.strums.get(ref.name);
     if (!p) continue;
     const ticks = Math.max(1, Math.round(bt / p.strokes.length));
-    for (let r = 0; r < ref.repeat; r++) bars.push(p.strokes.map((stroke) => ({ bar: bars.length, stroke, ticks, pattern: p.name })));
+    for (let r = 0; r < ref.repeat; r++) bars.push(p.strokes.map((stroke, i) => ({ bar: bars.length, stroke, ticks, pattern: p.name, pick: p.picks?.[i] })));
   }
   if (!bars.length) {
     // No strum given: one ringing strum per chord, a bar each.
@@ -177,7 +202,8 @@ export function chordSystems(section: Section, ctx: ViewCtx): StaffSystem[] {
     const frets = shape?.frets ?? [];
     const sounding = frets.map((f, i) => (f === null ? -1 : i)).filter((i) => i >= 0);
     let play: number[] = [];
-    if (slot.stroke === 'D' || slot.stroke === 'X') play = sounding;
+    if (slot.pick) play = pickStrings(slot.pick, frets);
+    else if (slot.stroke === 'D' || slot.stroke === 'X') play = sounding;
     else if (slot.stroke === 'U') play = sounding.slice(-4);
     const cell = (low: number) => (play.includes(low) ? (slot.stroke === 'X' ? 'x' : String(frets[low])) : '');
     const isChordStart = starts[ci] === s && spans[ci].chord;
@@ -192,7 +218,7 @@ export function chordSystems(section: Section, ctx: ViewCtx): StaffSystem[] {
       let rest = 0;
       for (let j = s + 1; j < slots.length && slots[j].bar === slot.bar && slots[j].stroke === '-'; j++) rest++;
       rhythm.set(col, { tick: tickInBar, dur: slot.ticks * (1 + rest) });
-      if (slot.stroke !== 'X') strokes.push({ col, dir: slot.stroke as 'D' | 'U' });
+      if (slot.stroke !== 'X' && !slot.pick) strokes.push({ col, dir: slot.stroke as 'D' | 'U' });
     }
     tickInBar += slot.ticks;
     const lastInBar = s + 1 >= slots.length || slots[s + 1].bar !== slot.bar;

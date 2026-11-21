@@ -102,6 +102,15 @@ ${row(ICONS.up, 'Up strum', 'strum up; usually just the top 3–4 thin strings.'
 ${row(ICONS.chordName, 'Chord name', 'the chord you\'re holding from here on. The boxes at the bottom of the song show how to hold it.')}
 </table>
 
+<h3>Fingerpicking patterns</h3>
+<p>Picked songs show letters and numbers instead of arrows. Hold the chord and pick one string per count:</p>
+<ul>
+  <li><b>B</b> = thumb on the chord's bass string (its lowest note).</li>
+  <li><b>A</b> = thumb on the alternate bass, the next bass string up. B and A take turns (Travis picking).</li>
+  <li><b>1–6</b> = that string with a finger; <b>1 is the thinnest</b>, 6 the thickest.</li>
+  <li><b>B+1</b> = pick both at once (a pinch).</li>
+</ul>
+
 <h3>Rhythm (the stems under the tab)</h3>
 <table class="tech">
 ${row(ICONS.whole, 'No stem', 'hold for the whole bar.')}

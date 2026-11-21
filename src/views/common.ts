@@ -67,12 +67,25 @@ const STROKE: Record<string, { glyph: string; tip: string; cls: string }> = {
   X: { glyph: '✕', tip: 'Muted chuck — strum while lightly damping the strings with your fretting hand', cls: 'chuck' },
 };
 
+/** Text and tooltip for one fingerpicking slot, e.g. ['B','1'] → "B+1". */
+export function pickCell(pick: string[]): { text: string; tip: string } {
+  if (!pick.length) return { text: '', tip: 'Rest — let the strings ring' };
+  const one = (t: string) => t === 'B' ? 'thumb on the bass string of the chord'
+    : t === 'A' ? 'thumb on the alternate bass string (the next bass string up)'
+    : `string ${t}${t === '1' ? ' (thinnest)' : t === '6' ? ' (thickest)' : ''}`;
+  return { text: pick.join('+'), tip: (pick.length > 1 ? 'Pick together: ' : 'Pick ') + pick.map(one).join(' + ') };
+}
+
 /** Draw a strum pattern with arrows, gaps for rests, counts and repeat marks. */
 export function renderStrum(p: StrumPattern | undefined, ref: StrumRef, time: string, compact = false): string {
   if (!p) return `<div class="strum missing">strum "${esc(ref.name)}" not found</div>`;
   const counts = countLabels(p.strokes.length, time);
   const cells = p.strokes
     .map((s, i) => {
+      if (p.picks) {
+        const c = pickCell(p.picks[i]);
+        return `<span class="stroke pick" data-tip="${esc(c.tip)}"><b>${esc(c.text)}</b>${counts ? `<i>${esc(counts[i])}</i>` : ''}</span>`;
+      }
       const st = STROKE[s];
       return `<span class="stroke ${st.cls}" data-tip="${esc(st.tip)}"><b>${st.glyph}</b>${counts ? `<i>${esc(counts[i])}</i>` : ''}</span>`;
     })
@@ -80,7 +93,7 @@ export function renderStrum(p: StrumPattern | undefined, ref: StrumRef, time: st
   // In compact form (above lyrics) the pattern is one bar, played every bar — no repeat count.
   const rep = ref.repeat > 1 && !compact;
   return `<div class="strum${compact ? ' compact' : ''}">
-    <span class="strum-name">${esc(p.name)}</span>
+    <span class="strum-name">${esc(p.name)}${p.picks ? ' <small data-tip="Fingerpicking: B = bass string of the chord, A = alternate bass, numbers = string (1 = thinnest)">(picked)</small>' : ''}</span>
     ${rep ? '<span class="repeat-mark" data-tip="Repeat sign: play this pattern again">‖:</span>' : ''}
     <span class="strokes">${cells}</span>
     ${rep ? `<span class="repeat-mark" data-tip="End of repeat">:‖</span><span class="times" data-tip="Play the pattern ${ref.repeat} times">×${ref.repeat}</span>` : ''}

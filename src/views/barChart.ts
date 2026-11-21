@@ -7,7 +7,7 @@
  */
 import type { Section, Stroke } from '../core/types';
 import { sectionLayout } from './chordTab';
-import { chordName, type ViewCtx } from './common';
+import { chordName, pickCell, type ViewCtx } from './common';
 import { esc } from './html';
 
 export type ChartKind = 'full' | 'repeat' | 'chord';
@@ -17,6 +17,8 @@ export interface ChartBar {
   chords: string[];
   pattern: string;
   strokes: Stroke[];
+  /** Fingerpicking slots, when the pattern is picked. */
+  picks?: string[][];
   kind: ChartKind;
   /** Lyric line this bar belongs to (bars of one line share a row). */
   line: number;
@@ -34,11 +36,12 @@ export function sectionChart(section: Section, ctx: ViewCtx): ChartBar[] {
     starts.forEach((st, i) => { if (st > s0 && st < s1 && !idx.includes(i)) idx.push(i); });
     const chords = idx.map((i) => spans[i].chord).map((c) => (c ? chordName(ctx, c) : 'N.C.'));
     const strokes = bar.map((sl) => sl.stroke);
+    const picks = bar[0].pick ? bar.map((sl) => sl.pick ?? []) : undefined;
     const prev = out[out.length - 1];
     const sameStrum = !!prev && prev.pattern === bar[0].pattern && prev.strokes.join('') === strokes.join('');
     const sameChords = !!prev && prev.chords.join(' ') === chords.join(' ');
     const kind: ChartKind = !sameStrum ? 'full' : sameChords ? 'repeat' : 'chord';
-    out.push({ chords, pattern: bar[0].pattern, strokes, kind, line: spans[chordAt(s0)].line });
+    out.push({ chords, pattern: bar[0].pattern, strokes, picks, kind, line: spans[chordAt(s0)].line });
   });
   return out;
 }
@@ -53,8 +56,13 @@ function countLabels(n: number, time: string): string[] | null {
   return null;
 }
 
-function strumHtml(strokes: Stroke[], time: string): string {
+function strumHtml(strokes: Stroke[], time: string, picks?: string[][]): string {
   const counts = countLabels(strokes.length, time);
+  if (picks) {
+    return `<span class="cb-strum picked">${picks
+      .map((p, i) => { const c = pickCell(p); return `<span class="cb-stroke" data-tip="${esc(c.tip)}"><b>${esc(c.text)}</b>${counts ? `<i>${counts[i]}</i>` : ''}</span>`; })
+      .join('')}</span>`;
+  }
   const tips: Record<Stroke, string> = {
     D: 'Strum down', U: 'Strum up', '-': 'Rest — keep your hand moving, miss the strings', X: 'Muted chuck — strum while damping the strings',
   };
@@ -79,11 +87,11 @@ export function renderChart(bars: ChartBar[], time: string, perRow = 8, size: Ch
   const cell = (b: ChartBar) => {
     const names = b.chords.map((c) => `<span class="cb-chord">${esc(c)}</span>`).join('');
     if (b.kind === 'full') {
-      return `<div class="cb-bar full"><div class="cb-chords">${names}</div>${strumHtml(b.strokes, time)}</div>`;
+      return `<div class="cb-bar full"><div class="cb-chords">${names}</div>${strumHtml(b.strokes, time, b.picks)}</div>`;
     }
     const tip = b.kind === 'repeat'
-      ? 'Repeat the previous bar: same chord, same strum'
-      : `Same strum as the previous bar, but change to ${b.chords.join(' then ')}`;
+      ? 'Repeat the previous bar: same chord, same pattern'
+      : `Same pattern as the previous bar, but change to ${b.chords.join(' then ')}`;
     return `<div class="cb-bar ${b.kind}"><div class="cb-chords">${b.kind === 'chord' ? names : ''}</div><span class="cb-repeat" data-tip="${esc(tip)}">%</span></div>`;
   };
   let chunks: ChartBar[][];

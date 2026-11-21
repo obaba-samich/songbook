@@ -32,7 +32,14 @@ export type Stroke = 'D' | 'U' | '-' | 'X';
 
 export interface StrumPattern {
   name: string;
+  /** For a picking pattern: 'D' where something is picked, '-' for a rest. */
   strokes: Stroke[];
+  /**
+   * Set for a fingerpicking pattern ({pick:}): per slot, the strings picked
+   * together — 'B' = the chord's bass string, 'A' = alternate bass,
+   * '1'-'6' = string number (1 = thinnest). Empty = rest.
+   */
+  picks?: string[][];
   line: number;
 }
 
