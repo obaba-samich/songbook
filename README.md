@@ -30,8 +30,9 @@ Guitar Pro files (`.gp`, `.gp5`, `.gpx`, `.gp4`, `.gp3`) work too: put them in
 [alphaTab](https://alphatab.net) as real tab — rhythm stems under the numbers,
 hammer-ons, slides, bends — and the part picker offers **Lyrics + guitars** (the vocal line with
 its lyrics over the guitar tab; the default when the file has lyrics), **All
-guitars (stacked)**, **Every part**, or a single track. Guitars and bass show as tab,
-other instruments as sheet music. **▶** plays the song with a cursor that
+guitars (stacked)**, or a single guitar or bass part. The tab only shows
+guitar-related parts (guitars and bass as tab, the vocal line as sheet music);
+the other instruments are still heard. **▶** plays the song with a cursor that
 follows the notes (click a note to start there; the slider sets the speed).
 Playback needs `npm run dev`; the single-file build draws the tab and ▶
 auto-scrolls instead.

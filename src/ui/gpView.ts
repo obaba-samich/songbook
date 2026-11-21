@@ -88,14 +88,17 @@ export function parsePart(v: string): GpPart {
   return v === 'sing' || v === 'guitars' || v === 'all' ? v : Number(v);
 }
 
+/** What the tab can show: guitar-related parts only (guitars, bass, the lyric line over them). Other instruments are only heard. */
 export function partOptions(song: GpSong): { value: string; label: string }[] {
   const tracks = song.score.tracks;
   const guitars = tracks.filter(isGuitar);
   const opts: { value: string; label: string }[] = [];
   if (lyricTracks(tracks).length && guitars.length) opts.push({ value: 'sing', label: `Lyrics + guitar${guitars.length > 1 ? 's' : ''}` });
   if (guitars.length > 1) opts.push({ value: 'guitars', label: `All guitars (${guitars.length}, stacked)` });
-  opts.push({ value: 'all', label: `Every part (${tracks.length}, stacked)` });
-  tracks.forEach((t) => opts.push({ value: String(t.index), label: trackName(t) }));
+  const shown = tracks.filter((t) => isGuitar(t) || isBass(t));
+  // A file with no guitar or bass at all: show every part rather than nothing.
+  if (!shown.length) opts.push({ value: 'all', label: `Every part (${tracks.length}, stacked)` });
+  shown.forEach((t) => opts.push({ value: String(t.index), label: trackName(t) }));
   return opts;
 }
 
