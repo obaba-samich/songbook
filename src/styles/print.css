@@ -23,7 +23,8 @@
 
   .sec { break-inside: avoid; page-break-inside: avoid; margin-bottom: 12pt; }
   .sec-label { break-after: avoid; page-break-after: avoid; border-color: #000; }
-  .chip, .prog-row, .chord-line { border-color: #000; }
+  .chip, .prog-row, .chord-line, .cb-row, .cb-bar { border-color: #000; }
+  .cb-row { break-inside: avoid; }
   .staff-row { break-inside: avoid; }
   .st-line { stroke: #555; }
   .strokes { border-color: #000; }

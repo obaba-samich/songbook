@@ -1,6 +1,7 @@
-/** Chords view: each section once, its progression and strum, then diagrams and order. */
+/** Chords view: each section once as a bar-by-bar chord chart (strum, chord, % repeats), then diagrams and order. */
 import type { Section } from '../core/types';
-import { diagramsBlock, orderBlock, playedSections, progressionRows, renderStrums, sectionComments, songHeader, type ViewCtx } from './common';
+import { diagramsBlock, orderBlock, playedSections, sectionComments, songHeader, type ViewCtx } from './common';
+import { renderChart, sectionChart } from './barChart';
 import { esc } from './html';
 
 export function renderChordsView(ctx: ViewCtx): string {
@@ -11,7 +12,7 @@ export function renderChordsView(ctx: ViewCtx): string {
     .map((s) => {
       const n = times(s);
       const badge = n > 1 ? ` <span class="played" title="Played ${n} times in the song">played ×${n}</span>` : '';
-      return `<section class="sec"><h2 class="sec-label">${esc(s.name)}${badge}</h2>${sectionComments(s)}${renderStrums(ctx, s)}${progressionRows(ctx, s)}</section>`;
+      return `<section class="sec"><h2 class="sec-label">${esc(s.name)}${badge}</h2>${sectionComments(s)}${renderChart(sectionChart(s, ctx), ctx)}</section>`;
     })
     .join('');
   return `${songHeader(ctx)}<div class="view-chords">${body}</div>${diagramsBlock(ctx)}${orderBlock(ctx.song)}`;
