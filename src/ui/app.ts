@@ -18,7 +18,7 @@ interface Entry {
   fileName: string;
   /** A .gsong file … */
   result?: ParseResult;
-  /** … or a Guitar Pro file. */
+  /** … or a Guitar Pro file (plus, when a .gsong of the same name exists, its chords and lyrics in `result`). */
   gp?: GpSong;
   source: 'library' | 'loaded';
 }
@@ -212,11 +212,13 @@ export function startApp(root: HTMLElement, bundled: Record<string, string>, gpF
     article.style.fontSize = `${prefs.fontSize}px`;
     article.dataset.view = prefs.view;
     renderList();
-    const gpMode = !!current?.gp;
-    root.querySelectorAll<HTMLButtonElement>('.view-switch button').forEach((b) => { b.disabled = gpMode && b.dataset.view !== 'tab'; });
+    // A Guitar Pro song draws its own tab; a paired .gsong gives it Chords and Lyrics views.
+    const gpMode = !!current?.gp && (prefs.view === 'tab' || !current.result);
+    root.querySelectorAll<HTMLButtonElement>('.view-switch button').forEach((b) => { b.disabled = !!current?.gp && !current.result && b.dataset.view !== 'tab'; });
     $('.key-capo').hidden = gpMode;
     if (!gpMode && gpView) { gpView.destroy(); gpView = null; }
-    if (current?.gp) { renderGp(current, current.gp); return; }
+    if (gpMode) { renderGp(current!, current!.gp!); return; }
+    delete article.dataset.gp;
     if (!current || !settings || !current.result) {
       diag.innerHTML = '';
       guitarSel.hidden = true;
@@ -224,7 +226,7 @@ export function startApp(root: HTMLElement, bundled: Record<string, string>, gpF
       return;
     }
     const song = current.result.song;
-    guitarSel.hidden = song.guitars.length < 2;
+    guitarSel.hidden = song.guitars.length < 2 || !!current.gp;
     const canStack = prefs.view === 'tab' && song.guitars.length > 1;
     guitarSel.innerHTML = (canStack ? '<option value="all">All parts (stacked)</option>' : '')
       + song.guitars.map((g, i) => `<option value="${i}">${esc(g.name)}</option>`).join('');
@@ -287,8 +289,18 @@ export function startApp(root: HTMLElement, bundled: Record<string, string>, gpF
     fetch(url).then((r) => r.arrayBuffer()).then((buf) => {
       const e = gpEntry('lib:' + baseName(path), baseName(path), new Uint8Array(buf), 'library');
       if (!e) return;
+      // songs/x.gp + songs/x.gsong = one song: real tab from the .gp, chords and lyrics from the .gsong.
+      const stem = baseName(path).replace(GP_EXT, '');
+      const twin = entries.findIndex((x) => x.result && !x.gp && x.fileName.replace(/\.gsong$/i, '') === stem);
+      let wasLast = false;
+      if (twin >= 0) {
+        e.result = entries[twin].result;
+        wasLast = prefs.last === entries[twin].id;
+        if (current === entries[twin]) { current = null; wasLast = true; }
+        entries.splice(twin, 1);
+      }
       entries.push(e);
-      if (!current && prefs.last === e.id) select(e); else renderList();
+      if (!current && (wasLast || prefs.last === e.id)) select(e); else renderList();
     });
   }
 

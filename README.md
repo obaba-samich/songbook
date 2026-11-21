@@ -34,7 +34,12 @@ guitars (stacked)**, **Every part**, or a single track. Guitars and bass show as
 other instruments as sheet music. **▶** plays the song with a cursor that
 follows the notes (click a note to start there; the slider sets the speed).
 Playback needs `npm run dev`; the single-file build draws the tab and ▶
-auto-scrolls instead. Guitar Pro songs only have the Tab view.
+auto-scrolls instead.
+
+A Guitar Pro file and a `.gsong` with the same name (`songs/x.gp` +
+`songs/x.gsong`) become one song: Tab shows the Guitar Pro tab, and Chords and
+Lyrics come from the `.gsong`. Without a matching `.gsong`, a Guitar Pro song
+only has the Tab view.
 
 ## Views
 
