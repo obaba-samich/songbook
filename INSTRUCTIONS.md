@@ -18,6 +18,7 @@ block, followed by a short note listing anything you were unsure about.
 - A line starting with `#` is a file comment. It is ignored entirely (not displayed).
 - Blank lines are allowed anywhere. Inside a section they show as a gap between lyric lines.
 - Directive names are lowercase.
+- Don't put anything after a directive on the same line (no trailing `# notes`).
 
 The file has two parts:
 
@@ -239,7 +240,64 @@ in the Tablature view instead.
 - Only one `{order:}` per file. If it is missing, sections play in the order they
   are written.
 
-## 8. Tab from memory may be approximate
+## 8. Multiple guitar parts (optional)
+
+When a song has more than one guitar (e.g. a strummed rhythm part and a picked
+or lead part), declare each one in the header with `{guitar:}`. The app shows a
+guitar picker; the Chords and Lyrics views show the chords and strum for the
+chosen guitar, and the Tablature view shows that guitar's tab.
+
+```
+# song-wide default capo and a voicing every guitar inherits
+{capo: 2}
+{define: G 3 2 0 0 3 3}
+
+# Rhythm inherits capo 2
+{guitar: Rhythm}
+
+# Lead plays without a capo, in Drop D, with its own A voicing
+{guitar: Lead}
+{capo: 0}
+{tuning: Drop D}
+{define: A x 0 2 2 2 x}
+```
+
+- Everything after a `{guitar:}` line and before the next `{guitar:}` (or the
+  first section) belongs to that guitar. Only `{capo:}`, `{tuning:}` and
+  `{define:}` can be set per guitar; `title`, `artist`, `key`, `tempo`, `time`
+  must come **before the first `{guitar:}`**.
+- The first guitar declared is the default.
+- **Chord names in the lyrics are always written as shapes for the song-wide
+  `{capo:}`.** For a guitar with a different capo the app re-works the chord
+  names and diagrams so they match what that guitar actually fingers (song in A,
+  default capo 2 writes `[G]`; the "Lead" guitar at capo 0 sees `A`). So a
+  guitar's `{define:}` must use the name *that guitar* sees (`A` above, not `G`),
+  and its voicings should match the shapes its tab plays.
+- Inside a section, `{guitar: Lead}` switches which guitar the following
+  `{use:}` and `{tab}` lines belong to. Each new section starts on the first
+  (default) guitar again. `{tab: Lead}` is a shortcut for one tab block.
+
+```
+{section: Verse 1}
+# Rhythm (the default guitar) strums
+{use: main x4}
+# Lead plays a riff
+# (Lead is in Drop D, so its lowest tab line is labelled D)
+{tab: Lead}
+e|-----0-----|
+B|---1---1---|
+G|-2-------2-|
+D|-----------|
+A|0----------|
+D|-----------|
+{end_tab}
+[G]Lyrics with [C]chords
+```
+
+A guitar with no tab in a section shows that section's chords (in its own
+shapes) instead.
+
+## 9. Tab from memory may be approximate
 
 You are often writing tab and voicings from memory. That is fine, but **say so**:
 if any tab, riff, voicing, or chord placement is a guess or simplified, put a
@@ -254,7 +312,7 @@ exact. For songs still under copyright, do not reproduce the full lyrics; write
 the chord chart with only the first line of each section or a placeholder like
 `[G]Verse 1 lyrics… [C]` and say so in a comment.
 
-## 9. Complete example
+## 10. Complete example
 
 ```
 # Example song showing every feature. Lines starting with # are ignored.
@@ -330,7 +388,7 @@ E|---------|--------|
 Note how the solo's first system has a palm-mute annotation line above the 6
 string lines, and the two systems are separated by one blank line.
 
-## 10. Checklist — run this before giving me the file
+## 11. Checklist — run this before giving me the file
 
 Go through each item and fix the file if any fails:
 
@@ -355,6 +413,10 @@ Go through each item and fix the file if any fails:
    saying so and which part.
 10. The file uses only directives from this document: `title`, `artist`, `key`,
     `capo`, `tempo`, `time`, `tuning`, `comment`/`c`, `define`, `strum`,
-    `section`, `use`, `tab`, `end_tab`, `order`.
+    `section`, `use`, `tab`, `end_tab`, `order`, `guitar`.
+11. If there are several guitars: each is declared in the header, every
+    `{guitar: X}` / `{tab: X}` inside a section names a declared guitar, each
+    guitar's `{define:}` uses the chord name that guitar sees at its own capo,
+    and its voicings match the shapes its tab actually plays.
 
 The user can check the result with `npm run validate songs/<file>.gsong`.

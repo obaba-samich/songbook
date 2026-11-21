@@ -43,9 +43,19 @@ describe('sample songs', () => {
     for (const t of ['h', 'p', '/', '\\', 'b', 'r', '~', 'PM']) expect(tabText, `technique ${t}`).toContain(t);
   });
 
+  it('the multiple-guitar example in INSTRUCTIONS.md is valid', () => {
+    const md = readFileSync(new URL('../INSTRUCTIONS.md', import.meta.url), 'utf8');
+    const part = md.split('## 8. Multiple guitar parts')[1].split('## 9.')[0];
+    const blocks = part.split('```').filter((_, i) => i % 2 === 1).map((b) => b.replace(/^\n/, ''));
+    const src = `{title: T}\n{artist: A}\n{strum: main = D U}\n${blocks[0]}${blocks[1]}`;
+    const r = parseSong(src);
+    expect(r.diagnostics).toEqual([]);
+    expect(r.song.guitars.map((g) => [g.name, g.capo, g.tuning.name])).toEqual([['Rhythm', 2, 'Standard'], ['Lead', 0, 'Drop D']]);
+  });
+
   it('the complete example in INSTRUCTIONS.md is valid', () => {
     const md = readFileSync(new URL('../INSTRUCTIONS.md', import.meta.url), 'utf8');
-    const example = md.split('## 9. Complete example')[1].split('```')[1].replace(/^\n/, '');
+    const example = md.split('## 10. Complete example')[1].split('```')[1].replace(/^\n/, '');
     expect(parseSong(example).diagnostics).toEqual([]);
   });
 });
