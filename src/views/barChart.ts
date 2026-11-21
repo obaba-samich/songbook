@@ -63,7 +63,7 @@ function strumHtml(strokes: Stroke[], time: string): string {
     .join('')}</span>`;
 }
 
-export function renderChart(bars: ChartBar[], ctx: ViewCtx): string {
+export function renderChart(bars: ChartBar[], time: string): string {
   if (!bars.length) return '<p class="muted">No chords in this section.</p>';
   const rows: ChartBar[][] = [];
   for (const b of bars) {
@@ -71,7 +71,6 @@ export function renderChart(bars: ChartBar[], ctx: ViewCtx): string {
     if (last && last[0].line === b.line) last.push(b);
     else rows.push([b]);
   }
-  const time = ctx.song.meta.time;
   const cell = (b: ChartBar) => {
     const names = b.chords.map((c) => `<span class="cb-chord">${esc(c)}</span>`).join('');
     if (b.kind === 'full') {
