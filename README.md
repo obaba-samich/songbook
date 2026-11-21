@@ -1,6 +1,6 @@
 # Songbook
 
-Repo: https://github.com/obaba-samich/songbook (private).
+Repo: https://github.com/obaba-samich/songbook
 
 A local guitar songbook that runs in the browser. Each song is one `.gsong` text
 file (ChordPro-style) that holds everything: metadata, chord voicings, strum
