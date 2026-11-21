@@ -67,6 +67,9 @@ export function normalizeChord(name: string): string {
 
 const FLAT_KEYS = new Set(['F', 'Bb', 'Eb', 'Ab', 'Db', 'Gb', 'Cb', 'Dm', 'Gm', 'Cm', 'Fm', 'Bbm', 'Ebm', 'Abm']);
 
+/** Sharp keys a guitarist would pick over the flat spelling (F# over Gb, G#m over Abm). */
+const SHARP_KEYS = new Set(['G', 'D', 'A', 'E', 'B', 'F#', 'Em', 'Bm', 'F#m', 'C#m', 'G#m']);
+
 /** Whether a key is conventionally spelled with flats. */
 export function keyUsesFlats(key: string | null): boolean | null {
   if (!key) return null;
@@ -89,6 +92,7 @@ export function transposeKey(key: string, semitones: number): string {
   const sharp = transposeNote(m[1], semitones, false) + minor;
   const flat = transposeNote(m[1], semitones, true) + minor;
   if (sharp === flat) return sharp;
+  if (SHARP_KEYS.has(sharp)) return sharp;
   return FLAT_KEYS.has(flat) ? flat : sharp;
 }
 

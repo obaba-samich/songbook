@@ -7,7 +7,7 @@ import type {
   BodyLine, ChordShape, Diagnostic, Guitar, LyricSegment, ParseResult, Section, Song, Stroke,
   StrumRef, TabBlock, TabSystem, Tuning,
 } from './types';
-import { isValidChordName, isValidKey, notePc } from './chords';
+import { isValidChordName, isValidKey, NO_CHORD, notePc } from './chords';
 import { parseTuning, STANDARD } from './library';
 import { displayChord, shapeFor } from './transpose';
 
@@ -288,6 +288,7 @@ export function parseSong(text: string): ParseResult {
   // Every chord needs a shape for every guitar, at that guitar's own capo.
   const reported = new Set<string>();
   for (const use of chordUses) {
+    if (use.name === NO_CHORD) continue;
     song.guitars.forEach((g, gi) => {
       const key = `${use.line}:${use.name}:${gi}`;
       if (reported.has(key)) return;
