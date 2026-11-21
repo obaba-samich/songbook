@@ -56,12 +56,12 @@ function countLabels(n: number, time: string): string[] | null {
   return null;
 }
 
-function strumHtml(strokes: Stroke[], time: string, picks?: string[][]): string {
+function strumHtml(strokes: Stroke[], time: string, picks?: string[][], name?: string): string {
   const counts = countLabels(strokes.length, time);
   if (picks) {
-    return `<span class="cb-strum picked">${picks
-      .map((p, i) => { const c = pickCell(p); return `<span class="cb-stroke" data-tip="${esc(c.tip)}"><b>${esc(c.text)}</b>${counts ? `<i>${counts[i]}</i>` : ''}</span>`; })
-      .join('')}</span>`;
+    // Too long to fit a bar: the bar names the pattern, written out above the chart.
+    const tip = picks.map((p) => pickCell(p).text || '-').join(' ');
+    return `<span class="cb-strum picked" data-tip="Fingerpick: ${esc(tip)}"><span class="cb-pickname">${esc(name ?? 'picked')}</span></span>`;
   }
   const tips: Record<Stroke, string> = {
     D: 'Strum down', U: 'Strum up', '-': 'Rest — keep your hand moving, miss the strings', X: 'Muted chuck — strum while damping the strings',
@@ -87,7 +87,7 @@ export function renderChart(bars: ChartBar[], time: string, perRow = 8, size: Ch
   const cell = (b: ChartBar) => {
     const names = b.chords.map((c) => `<span class="cb-chord">${esc(c)}</span>`).join('');
     if (b.kind === 'full') {
-      return `<div class="cb-bar full"><div class="cb-chords">${names}</div>${strumHtml(b.strokes, time, b.picks)}</div>`;
+      return `<div class="cb-bar full"><div class="cb-chords">${names}</div>${strumHtml(b.strokes, time, b.picks, b.pattern)}</div>`;
     }
     const tip = b.kind === 'repeat'
       ? 'Repeat the previous bar: same chord, same pattern'
