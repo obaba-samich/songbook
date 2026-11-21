@@ -239,7 +239,7 @@ code { font-family: var(--mono); font-size: 0.92em; }
 .cb-chords { display: flex; gap: 0.7em; min-height: 1.3em; }
 .cb-chord { font: 700 1em var(--serif); }
 .cb-strum { display: flex; margin-top: 0.1em; }
-.cb-stroke { display: inline-flex; flex-direction: column; align-items: center; width: 1.05em; cursor: help; }
+.cb-stroke { display: inline-flex; flex-direction: column; align-items: center; flex: 1 1 0; max-width: 1.3em; min-width: 0; cursor: help; }
 .cb-stroke b { font-size: 1.05em; line-height: 1.1; min-height: 1.1em; font-weight: 600; }
 .cb-stroke i { font-style: normal; font-size: 0.5em; color: var(--muted); }
 .cb-repeat { font: 400 1.7em/1 var(--serif); align-self: center; margin-top: auto; margin-bottom: auto; cursor: help; }
@@ -254,7 +254,13 @@ code { font-family: var(--mono); font-size: 0.92em; }
 }
 .help-panel h2 { margin-top: 0; }
 .help-panel h3 { margin: 1.2em 0 0.3em; font-size: 1rem; }
-.help-panel .help-tab { color: var(--fg); font-size: 0.85rem; background: var(--panel); padding: 8px 10px; border-radius: 8px; overflow-x: auto; }
+.help-panel .tech td.hi { width: 1%; padding-right: 10px; text-align: center; vertical-align: middle; }
+.help-icon { display: block; margin: 0 auto; overflow: visible; }
+.help-panel .help-h2 { margin-top: 1.6em; padding-top: 0.8em; border-top: 1px solid var(--line); }
+.help-diagrams { display: flex; gap: 24px; font-size: 28px; }
+.help-chart { font-size: 16px; }
+.help-chart .cb-row { grid-template-columns: repeat(2, 1fr); }
+.help-panel pre.help-tab, .help-panel .help-tab { color: var(--fg); font-size: 0.85rem; background: var(--panel); padding: 8px 10px; border-radius: 8px; overflow-x: auto; }
 .help-panel ul { padding-left: 18px; }
 .help-close { position: absolute; top: 12px; right: 12px; border: 1px solid var(--line); background: var(--bg); border-radius: 8px; cursor: pointer; padding: 4px 9px; }
 .tech { border-collapse: collapse; }
