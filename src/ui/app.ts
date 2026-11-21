@@ -57,7 +57,7 @@ export function startApp(root: HTMLElement, bundled: Record<string, string>): vo
   let settings: PlaySettings | null = null;
   let search = '';
   let scrolling = false;
-  let tabColsOverride: number | null = null;
+  let tabWidthOverride: number | null = null;
 
   root.innerHTML = `
   <div class="shell${prefs.sidebar ? '' : ' no-sidebar'}">
@@ -155,16 +155,11 @@ export function startApp(root: HTMLElement, bundled: Record<string, string>): vo
       : `<li class="muted small empty">${entries.length ? 'No songs match.' : 'No songs yet. Put .gsong files in songs/ or open one.'}</li>`;
   }
 
-  function measureTabCols(): number {
-    if (tabColsOverride) return tabColsOverride;
-    const probe = document.createElement('pre');
-    probe.className = 'tab';
-    probe.style.cssText = 'position:absolute;visibility:hidden;padding:0;margin:0;';
-    probe.textContent = '0'.repeat(50);
-    article.appendChild(probe);
-    const ch = probe.getBoundingClientRect().width / 50 || 10;
-    probe.remove();
-    return Math.max(24, Math.floor((article.clientWidth - 8) / ch));
+  function measureTabWidth(): number {
+    if (tabWidthOverride) return tabWidthOverride;
+    const cs = getComputedStyle(article);
+    const inner = article.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+    return Math.max(20, inner / prefs.fontSize - 0.2);
   }
 
   function renderDiagnostics(e: Entry) {
@@ -199,7 +194,7 @@ export function startApp(root: HTMLElement, bundled: Record<string, string>): vo
     capoSel.value = String(settings.capo);
     $('.tr-val').textContent = settings.transpose > 0 ? `+${settings.transpose}` : String(settings.transpose);
     renderDiagnostics(current);
-    const ctx: ViewCtx = { song, settings, showStringNames: prefs.showStringNames, tabCols: measureTabCols() };
+    const ctx: ViewCtx = { song, settings, showStringNames: prefs.showStringNames, tabWidthEm: measureTabWidth() };
     article.innerHTML = prefs.view === 'tab' ? renderTabView(ctx) : prefs.view === 'chords' ? renderChordsView(ctx) : renderLyricsView(ctx);
     document.title = `${song.meta.title || current.fileName} — Songbook`;
   }
@@ -311,13 +306,12 @@ export function startApp(root: HTMLElement, bundled: Record<string, string>): vo
     if (e.key === ' ' && current) { e.preventDefault(); scrolling ? stopScroll() : startScroll(); }
     if (e.key === 'Escape') helpPanel.hidden = true;
   });
-  // Any manual scroll with the wheel/touch keeps auto-scroll going from the new spot.
   let resizeTimer = 0;
   window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = window.setTimeout(() => prefs.view === 'tab' && render(), 150); });
 
   // Print: wrap tab to a fixed page width, restore afterwards.
-  window.addEventListener('beforeprint', () => { stopScroll(); if (prefs.view === 'tab') { tabColsOverride = 86; render(); } });
-  window.addEventListener('afterprint', () => { if (tabColsOverride) { tabColsOverride = null; render(); } });
+  window.addEventListener('beforeprint', () => { stopScroll(); if (prefs.view === 'tab') { tabWidthOverride = 42; render(); } });
+  window.addEventListener('afterprint', () => { if (tabWidthOverride) { tabWidthOverride = null; render(); } });
 
   installTooltips(document.body);
 

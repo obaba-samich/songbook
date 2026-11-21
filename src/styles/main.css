@@ -1,5 +1,6 @@
 :root {
   --sans: 'Fira Sans', 'Inter', 'Noto Sans', system-ui, sans-serif;
+  --serif: 'Source Serif 4', 'Noto Serif', 'DejaVu Serif', Georgia, serif;
   --mono: 'Fira Mono', 'JetBrains Mono', 'DejaVu Sans Mono', ui-monospace, monospace;
   --bg: #fbfaf7;
   --fg: #1c1c1c;
@@ -105,8 +106,9 @@ code { font-family: var(--mono); font-size: 0.92em; }
 
 /* ---- song header ---- */
 .song-head { margin-bottom: 1.2em; }
-.song-head h1 { font-size: 2em; margin: 0; line-height: 1.1; }
-.song-head .artist { font-size: 1.1em; margin: 0.2em 0 0; color: var(--muted); }
+.song-head { text-align: center; }
+.song-head h1 { font-family: var(--serif); font-weight: 600; font-size: 2.1em; margin: 0; line-height: 1.1; }
+.song-head .artist { font-family: var(--serif); font-style: italic; font-size: 1.1em; margin: 0.2em 0 0; color: var(--muted); }
 .song-head .meta { font-size: 0.8em; margin: 0.6em 0 0; color: var(--muted); }
 .song-head .dot { color: var(--faint); }
 .song-comment, .sec-comment { font-style: italic; color: var(--muted); font-size: 0.8em; margin: 0.3em 0; }
@@ -115,16 +117,20 @@ code { font-family: var(--mono); font-size: 0.92em; }
 /* ---- sections ---- */
 .sec { margin: 0 0 1.6em; }
 .sec-label {
-  font-size: 0.7em; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent);
-  margin: 0 0 0.4em; padding-bottom: 0.2em; border-bottom: 1px solid var(--line);
+  font-family: var(--serif); font-style: italic; font-weight: 400; font-size: 1.05em; color: var(--fg);
+  margin: 0 0 0.35em;
 }
 .played { text-transform: none; letter-spacing: 0; color: var(--muted); font-weight: 400; margin-left: 0.4em; }
 
-/* chord chips / progression */
-.prog { display: flex; flex-direction: column; gap: 0.35em; }
-.prog-row, .chord-line { display: flex; flex-wrap: wrap; gap: 0.35em; margin: 0.15em 0; }
-.chip { display: inline-block; min-width: 2.6em; text-align: center; padding: 0.15em 0.55em; border-radius: 0.35em; background: var(--chip); font-weight: 700; }
-.chip.nc { background: none; border: 1px dashed var(--faint); font-weight: 400; }
+/* chord chart: one bar per chord, like a lead sheet */
+.prog { display: flex; flex-direction: column; gap: 0.3em; }
+.prog-row, .chord-line { display: flex; flex-wrap: wrap; margin: 0.1em 0; border-left: 1.5px solid var(--fg); }
+.chip {
+  display: inline-block; min-width: 4.2em; padding: 0.2em 0.7em 0.2em 0.5em; border-right: 1.5px solid var(--fg);
+  font-weight: 700;
+}
+.chip.nc { font-weight: 400; color: var(--muted); }
+.prog-row .chip:last-child { border-right-width: 1.5px; }
 
 /* strum */
 .strums { display: flex; flex-wrap: wrap; gap: 0.4em 1.4em; margin: 0.3em 0 0.6em; }
@@ -163,7 +169,7 @@ code { font-family: var(--mono); font-size: 0.92em; }
 .t-anno { color: var(--accent); font-weight: 700; }
 [data-tip] { cursor: help; border-radius: 3px; }
 [data-tip]:hover, .tip-active { background: var(--hl); }
-.tab-fallback { border-left: 3px solid var(--line); padding-left: 0.8em; margin: 0.3em 0 0.8em; }
+.tab-fallback { margin: 0.3em 0 0.8em; }
 
 /* diagrams + order */
 .diagrams-wrap, .order-wrap { margin-top: 2em; }
@@ -184,6 +190,36 @@ code { font-family: var(--mono); font-size: 0.92em; }
 .dg-q { fill: var(--faint); font: 700 22px var(--sans); }
 .order { display: flex; flex-wrap: wrap; gap: 0.2em; font-size: 0.85em; }
 .order .arrow { color: var(--faint); }
+
+/* engraved tab staff */
+.staff { margin: 0.2em 0 0.8em; color: var(--fg); }
+.staff-row { display: block; height: auto; margin-bottom: 0.15em; overflow: visible; }
+.st-line { stroke: var(--muted); stroke-width: 0.6; }
+.st-bar { stroke: var(--fg); stroke-width: 0.9; }
+.st-thick, .st-dot, .st-arrow { fill: var(--fg); }
+.st-knock { fill: var(--bg); }
+.st-fret { fill: var(--fg); font: 600 11.5px var(--sans); text-anchor: middle; dominant-baseline: central; }
+.st-note { cursor: help; }
+.st-note:hover .st-fret, .st-note.tip-active .st-fret, .st-fx:hover .st-hp, .st-fx.tip-active .st-hp { fill: var(--accent); }
+.st-note:hover .st-knock, .st-note.tip-active .st-knock { fill: var(--hl); }
+.st-num { fill: var(--muted); font: 8px var(--sans); }
+.st-clef { fill: var(--fg); font: 700 12px var(--serif); text-anchor: middle; dominant-baseline: central; }
+.st-sname { fill: var(--muted); font: 600 8.5px var(--mono); text-anchor: middle; dominant-baseline: central; cursor: help; }
+.st-sig { fill: var(--fg); font: 700 24px var(--serif); text-anchor: middle; }
+.st-tempo { fill: var(--fg); font: 600 9.5px var(--sans); }
+.st-chord { fill: var(--fg); font: 600 10px var(--sans); }
+.st-text { fill: var(--muted); font: italic 8px var(--sans); }
+.st-effect { fill: var(--muted); font: 8px var(--sans); }
+.st-dash { stroke: var(--muted); stroke-width: 0.7; stroke-dasharray: 3 2; }
+.st-tick { stroke: var(--muted); stroke-width: 0.8; }
+.st-slur, .st-bend { fill: none; stroke: var(--fg); stroke-width: 0.9; }
+.st-slide { stroke: var(--fg); stroke-width: 1; }
+.st-vib { fill: none; stroke: var(--fg); stroke-width: 0.9; }
+.st-hp { fill: var(--muted); font: 600 6.5px var(--sans); text-anchor: middle; }
+.st-amt { fill: var(--fg); font: 600 7px var(--sans); text-anchor: middle; }
+.st-hit { fill: transparent; }
+.st-fx { cursor: help; }
+.staff [data-tip]:hover, .staff .tip-active { background: none; }
 
 /* help panel */
 .help-panel {

@@ -23,7 +23,9 @@
 
   .sec { break-inside: avoid; page-break-inside: avoid; margin-bottom: 12pt; }
   .sec-label { break-after: avoid; page-break-after: avoid; border-color: #000; }
-  .chip { border: 0.75pt solid #000; background: none; }
+  .chip, .prog-row, .chord-line { border-color: #000; }
+  .staff-row { break-inside: avoid; }
+  .st-line { stroke: #555; }
   .strokes { border-color: #000; }
   .stroke.up b, .t-hammer, .t-pull, .t-slideUp, .t-slideDown, .t-bend, .t-release, .t-vibrato, .t-anno { color: #000; }
   .tab { overflow: visible; color: #555; font-size: 9.5pt; break-inside: avoid; }

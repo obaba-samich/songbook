@@ -9,8 +9,8 @@ export interface ViewCtx {
   song: Song;
   settings: PlaySettings;
   showStringNames: boolean;
-  /** Max tab columns before wrapping at a bar line. */
-  tabCols: number;
+  /** Width available for a tab staff row, in em of the song text size. */
+  tabWidthEm: number;
 }
 
 export const chordName = (ctx: ViewCtx, name: string) => displayChord(name, ctx.song, ctx.settings);
