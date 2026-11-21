@@ -52,8 +52,9 @@ export type BodyLine =
   | { kind: 'lyric'; line: number; segments: LyricSegment[] }
   | { kind: 'comment'; line: number; text: string }
   | { kind: 'blank'; line: number }
-  | { kind: 'tab'; line: number; tab: TabBlock }
-  | { kind: 'strum'; line: number; refs: StrumRef[] };
+  /** `guitar` is the lower-cased name of the guitar the tab/strum belongs to. */
+  | { kind: 'tab'; line: number; guitar: string; tab: TabBlock }
+  | { kind: 'strum'; line: number; guitar: string; refs: StrumRef[] };
 
 /** One 6-string system (plus optional annotation lines above it). */
 export interface TabSystem {
@@ -76,10 +77,27 @@ export interface Section {
   body: BodyLine[];
 }
 
+/**
+ * One guitar part. Every song has at least one. Capo, tuning and voicings
+ * can differ per guitar; chord names in the lyrics are written as shapes for
+ * the song's default capo and get re-worked for each guitar's own capo.
+ */
+export interface Guitar {
+  name: string;
+  /** Lower-cased name, used as the key in body lines. */
+  id: string;
+  line: number;
+  capo: number;
+  tuning: Tuning;
+  /** Song-wide defines merged with this guitar's own (guitar wins). */
+  defines: Map<string, ChordShape>;
+}
+
 export interface SongMeta {
   title: string;
   artist: string;
   key: string | null;
+  /** Default capo: chord names in the file are shapes for this capo. */
   capo: number;
   tempo: number | null;
   time: string;
@@ -90,7 +108,10 @@ export interface Song {
   meta: SongMeta;
   /** {comment:} lines from the header. */
   comments: string[];
+  /** Song-wide {define}s (before any {guitar:}). */
   defines: Map<string, ChordShape>;
+  /** Guitar parts in declaration order; [0] is the default. Never empty. */
+  guitars: Guitar[];
   strums: Map<string, StrumPattern>;
   /** Keyed by lower-cased section name, in file order. */
   sections: Map<string, Section>;
