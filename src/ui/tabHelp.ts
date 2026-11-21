@@ -42,5 +42,14 @@ E|-----------|</pre>
   <tr><td><code>(3)</code></td><td><b>Ghost note</b>: very quiet, or optional.</td></tr>
 </table>
 
+<h3>Above and below the staff</h3>
+<ul>
+  <li><b>Chord names</b> above the staff show which chord you're in; the chord boxes at the bottom show how to hold it.</li>
+  <li><b>⊓</b> = strum <b>down</b>, <b>V</b> = strum <b>up</b>.</li>
+  <li><b>Stems under the staff show the rhythm</b>: a plain stem is a beat (quarter note), stems joined by one beam are half a beat each (eighth notes), two beams are a quarter beat (sixteenths). No stem = hold for the whole bar; a short stem = two beats. A dot makes the note half as long again.</li>
+  <li><b>Lyrics</b> sit under the note you sing them on.</li>
+  <li>The small numbers above the bar lines are <b>measure numbers</b>.</li>
+</ul>
+
 <p class="muted">Tip: hover over (or tap) any number or symbol in the tab to see exactly what it means.</p>
 `;
