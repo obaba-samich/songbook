@@ -14,12 +14,14 @@ npm install          # once
 npm run dev          # opens http://localhost:5173 with live reload
 npm run build        # → dist/index.html, a single file you can double-click (works from file://)
 npm test             # unit tests
-npm run validate songs/amazing-grace.gsong   # check one file (or no argument: all of songs/)
+npm run validate songs/my-song.gsong   # check one file (no argument: all of songs/ and examples/)
 ```
 
-Songs in `songs/` are bundled automatically (in dev, adding/editing a file
-reloads the page). Any other `.gsong` can be opened with **Open .gsong**,
-**Open folder**, or by dragging it onto the page.
+Put your own `.gsong` files in `songs/`. That folder is git-ignored, so your
+songs stay on your machine. They're bundled automatically (in dev,
+adding or editing a file reloads the page). If `songs/` is empty the app shows
+the public-domain examples from `examples/`. Any other `.gsong` can be opened
+with **Open .gsong**, **Open folder**, or by dragging it onto the page.
 
 ## Views
 
@@ -57,6 +59,7 @@ src/views/     tab / chords / lyrics views, SVG chord diagrams, strum drawing
 src/ui/        app shell, tooltips, tab help
 src/styles/    screen and print CSS
 scripts/       validate.ts (CLI)
-songs/         sample songs (public domain)
+songs/         YOUR songs — git-ignored, never committed
+examples/      public-domain example songs (shown when songs/ is empty; used by the tests)
 tests/         vitest
 ```

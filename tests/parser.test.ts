@@ -20,8 +20,8 @@ function expectError(src: string, line: number, text: string | RegExp) {
 
 const TAB6 = ['e|--0--|', 'B|--1--|', 'G|--0--|', 'D|--2--|', 'A|--3--|', 'E|-----|'];
 
-describe('sample songs', () => {
-  const dir = new URL('../songs/', import.meta.url).pathname;
+describe('example songs', () => {
+  const dir = new URL('../examples/', import.meta.url).pathname;
   for (const f of readdirSync(dir).filter((x) => x.endsWith('.gsong'))) {
     it(`${f} parses with no errors or warnings`, () => {
       const r = parseSong(readFileSync(dir + f, 'utf8'));

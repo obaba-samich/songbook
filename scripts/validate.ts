@@ -1,7 +1,7 @@
 /**
  * Validate .gsong files without opening the app.
  *   npm run validate songs/whatever.gsong [more files…]
- *   npm run validate            (checks every file in songs/)
+ *   npm run validate            (checks every file in songs/ and examples/)
  * Exit code 1 if any file has errors.
  */
 import { readdirSync, readFileSync, statSync } from 'node:fs';
@@ -15,11 +15,13 @@ const green = (s: string) => (color ? `\x1b[32m${s}\x1b[0m` : s);
 const dim = (s: string) => (color ? `\x1b[2m${s}\x1b[0m` : s);
 
 function expand(args: string[]): string[] {
-  const targets = args.length ? args : ['songs'];
+  const targets = args.length ? args : ['songs', 'examples'];
   return targets.flatMap((t) => {
     try {
       if (statSync(t).isDirectory()) return readdirSync(t).filter((f) => f.endsWith('.gsong')).sort().map((f) => join(t, f));
-    } catch { /* reported below */ }
+    } catch {
+      if (!args.length) return []; // default folder missing: nothing to check
+    }
     return [t];
   });
 }
