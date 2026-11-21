@@ -1,0 +1,37 @@
+/* Print: black on white, no UI, sections and diagrams kept whole. Prints the current view. */
+@page {
+  margin: 16mm 14mm 18mm;
+  @bottom-center {
+    content: 'Page ' counter(page) ' of ' counter(pages);
+    font: 9pt 'Fira Sans', sans-serif;
+    color: #555;
+  }
+}
+
+@media print {
+  :root, [data-theme='dark'] {
+    --bg: #fff; --fg: #000; --muted: #444; --faint: #777; --line: #bbb; --panel: #fff;
+    --accent: #000; --chip: #fff; --hl: transparent;
+  }
+  html, body { background: #fff !important; color: #000 !important; }
+  .library, .toolbar, .help-panel, .tooltip, .drop-overlay, .diagnostics { display: none !important; }
+  .shell { display: block; }
+  .song { max-width: none; padding: 0; margin: 0; font-size: 12pt !important; }
+
+  .song-head h1 { font-size: 22pt; }
+  .song-head { margin-bottom: 10pt; border-bottom: 1.5pt solid #000; padding-bottom: 6pt; }
+
+  .sec { break-inside: avoid; page-break-inside: avoid; margin-bottom: 12pt; }
+  .sec-label { break-after: avoid; page-break-after: avoid; border-color: #000; }
+  .chip { border: 0.75pt solid #000; background: none; }
+  .strokes { border-color: #000; }
+  .stroke.up b, .t-hammer, .t-pull, .t-slideUp, .t-slideDown, .t-bend, .t-release, .t-vibrato, .t-anno { color: #000; }
+  .tab { overflow: visible; color: #555; font-size: 9.5pt; break-inside: avoid; }
+  .t-fret, .t-ghost, .t-muted { color: #000; }
+  [data-tip]:hover { background: none; }
+
+  .diagrams-wrap { break-inside: avoid; page-break-inside: avoid; }
+  .diagram { break-inside: avoid; page-break-inside: avoid; }
+  .dg-finger { fill: #fff; }
+  .order-wrap { break-inside: avoid; }
+}
