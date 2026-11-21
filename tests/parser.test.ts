@@ -128,6 +128,11 @@ describe('valid files', () => {
     expect(tab.tab.systems[0].labelled).toBe(true);
   });
 
+  it('treats a chord-name line starting with a note+digit (G5) as an annotation, not a string', () => {
+    const src = `${HDR}{section: S}\n{tab}\n  G5   C5\n${TAB6.join('\n')}\n{end_tab}`;
+    expect(errors(src)).toEqual([]);
+  });
+
   it('accepts unlabelled tab', () => {
     const src = `${HDR}{section: S}\n{tab}\n${TAB6.map((l) => l.slice(1)).join('\n')}\n{end_tab}`;
     expect(errors(src)).toEqual([]);

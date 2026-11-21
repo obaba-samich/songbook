@@ -438,7 +438,8 @@ function parseStrum(value: string, n: number, song: Song, error: (l: number, m: 
   song.strums.set(name, { name, strokes, line: n });
 }
 
-const LABEL_RE = /^\s*([A-Ga-g][#b]?)\s*(?=[|:\-0-9])/;
+/** A string-name label: a note name directly followed by a bar line ("e|", "Eb |"). */
+const LABEL_RE = /^\s*([A-Ga-g][#b]?)\s*(?=[|:])/;
 
 function buildTab(start: number, rows: { text: string; line: number }[], tuning: Tuning, error: (l: number, m: string) => void): TabBlock | null {
   const groups: { text: string; line: number }[][] = [[]];
@@ -458,8 +459,7 @@ function buildTab(start: number, rows: { text: string; line: number }[], tuning:
     const annotations: string[] = [];
     const strs: { text: string; line: number }[] = [];
     for (const r of g) {
-      const isAnno = /^(\s|PM)/.test(r.text) && !LABEL_RE.test(r.text.replace(/^PM/, '#'));
-      if (isAnno && /^\s*[A-Ga-g][#b]?\s*\|/.test(r.text)) { strs.push(r); continue; }
+      const isAnno = /^(\s|PM)/.test(r.text) && !LABEL_RE.test(r.text);
       if (isAnno) {
         if (strs.length) { error(r.line, 'annotation line (PM, let ring…) must go above the 6 string lines, not between them'); ok = false; }
         annotations.push(r.text.replace(/\s+$/, ''));
