@@ -34,6 +34,8 @@ export function loadGp(bytes: Uint8Array, fileName: string): GpSong {
       st.showNumbered = false;
     }
   }
+  // Songsterr exports repeat the section name as its letter ("[Verse 1] Verse 1").
+  for (const mb of score.masterBars) if (mb.section && mb.section.marker === mb.section.text) mb.section.marker = '';
   return { title: score.title || fileName.replace(GP_EXT, ''), artist: score.artist || '', score, bytes };
 }
 
