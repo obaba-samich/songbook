@@ -103,10 +103,10 @@ export function describeTabToken(tokens: TabToken[], idx: number, stringLabel: s
 
 /** Tooltip for a word in an annotation line above the tab. */
 export function describeAnnotation(word: string): string | null {
-  const w = word.replace(/[-.|]+$/, '').toLowerCase();
-  if (w === 'pm' || w === 'p.m.') return 'Palm mute (PM) — rest the edge of your picking hand on the strings right by the bridge for a muted, chunky sound. The dashes show how long to keep muting.';
-  if (w === 'let' || w === 'ring') return 'Let ring — keep the notes sounding into each other';
-  if (w === 'nh' || w === 'harm') return 'Natural harmonic — touch the string lightly right over the fret wire, don\'t press';
+  const w = word.replace(/[-|]+$/, '').toLowerCase().replace(/\s+/g, ' ');
+  if (w === 'pm' || w === 'p.m.' || w === 'p.m') return 'Palm mute (PM) — rest the edge of your picking hand on the strings right by the bridge for a muted, chunky sound. The dashes show how long to keep muting.';
+  if (w === 'let ring') return 'Let ring — keep the notes sounding into each other';
+  if (w === 'nh' || w === 'n.h.' || w === 'n.h') return 'Natural harmonic — touch the string lightly right over the fret wire, don\'t press';
   return null;
 }
 

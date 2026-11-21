@@ -16,8 +16,7 @@ export function tabLabels(tuning: Tuning): string[] {
 }
 
 function renderAnnotation(line: string, pad: string): string {
-  const html = line.replace(/[^\s]+/g, (w) => `\u0000${w}\u0001`);
-  const out = esc(html).replace(/\u0000([^\u0001]*)\u0001/g, (_, w) => {
+  const out = esc(line).replace(/P\.?M\.?|let\s+ring|N\.?H\.?/gi, (w) => {
     const t = describeAnnotation(w);
     return t ? `<span class="t-anno"${tip(t)}>${w}</span>` : w;
   });
@@ -38,7 +37,7 @@ function renderSystem(sys: TabSystem, tuning: Tuning, ctx: ViewCtx): string {
         row.forEach((t) => (t.kind === 'fret' || t.kind === 'ghost' || t.kind === 'muted') && colCount.set(t.start, (colCount.get(t.start) ?? 0) + 1)),
       );
       const pad = ctx.showStringNames ? ' '.repeat(width) : '';
-      const annos = chunk.annotations.map((a) => renderAnnotation(a, pad)).join('\n');
+      const annos = chunk.annotations.map((a) => renderAnnotation(a, pad)).join('');
       const rows = tokenRows.map((tokens, r) => {
         const sname = stringName(tuning, lowIndex(r));
         const label = ctx.showStringNames
@@ -55,7 +54,7 @@ function renderSystem(sys: TabSystem, tuning: Tuning, ctx: ViewCtx): string {
           .join('');
         return `<span class="t-row">${label}${body}</span>`;
       });
-      return `<pre class="tab" aria-label="tab">${annos ? annos + '\n' : ''}${rows.join('\n')}</pre>`;
+      return `<pre class="tab" aria-label="tab">${annos}${rows.join('')}</pre>`;
     })
     .join('');
 }
