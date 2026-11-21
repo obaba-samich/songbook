@@ -28,8 +28,9 @@ with **Open song file**, **Open folder**, or by dragging it onto the page.
 Guitar Pro files (`.gp`, `.gp5`, `.gpx`, `.gp4`, `.gp3`) work too: put them in
 `songs/` or open them the same way. They're drawn with
 [alphaTab](https://alphatab.net) as real tab — rhythm stems under the numbers,
-hammer-ons, slides, bends — and the part picker offers **All guitars
-(stacked)**, **Every part**, or a single track. Guitars and bass show as tab,
+hammer-ons, slides, bends — and the part picker offers **Lyrics + guitars** (the vocal line with
+its lyrics over the guitar tab; the default when the file has lyrics), **All
+guitars (stacked)**, **Every part**, or a single track. Guitars and bass show as tab,
 other instruments as sheet music. **▶** plays the song with a cursor that
 follows the notes (click a note to start there; the slider sets the speed).
 Playback needs `npm run dev`; the single-file build draws the tab and ▶

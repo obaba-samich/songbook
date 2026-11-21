@@ -9,7 +9,7 @@ import type { ViewCtx } from '../views/common';
 import { esc } from '../views/html';
 import { installTooltips } from './tooltip';
 import { TAB_HELP_HTML } from './tabHelp';
-import { defaultPart, GP_EXT, GpView, loadGp, partOptions, type GpPart, type GpSong } from './gpView';
+import { defaultPart, GP_EXT, GpView, loadGp, parsePart, partOptions, type GpPart, type GpSong } from './gpView';
 
 type View = 'tab' | 'chords' | 'lyrics';
 
@@ -370,7 +370,7 @@ export function startApp(root: HTMLElement, bundled: Record<string, string>, gpF
   guitarSel.addEventListener('change', () => {
     if (current?.gp && gpView) {
       const v = guitarSel.value;
-      gpPart = v === 'guitars' || v === 'all' ? v : Number(v);
+      gpPart = parsePart(v);
       gpView.setPart(gpPart);
       return;
     }

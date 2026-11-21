@@ -66,13 +66,33 @@ export function isBass(t: Track): boolean {
   return !t.isPercussion && !!t.staves[0]?.isStringed && /bass/i.test(fullName(t)) && !/contrabass|double bass/i.test(fullName(t));
 }
 
-/** Part choices: 'guitars' (all guitars stacked), 'all' (every part stacked) or a track index. */
-export type GpPart = 'guitars' | 'all' | number;
+/** Tracks that carry lyrics (the vocal line). */
+export function hasLyrics(t: Track): boolean {
+  return t.staves.some((st) => st.bars.some((b) => b.voices.some((v) => v.beats.some((be) => be.lyrics?.some((l) => !!l)))));
+}
+
+/** The vocal line(s): lyric tracks named as vocals, else any non-guitar track with lyrics (Songsterr copies lyrics onto fiddles etc.). */
+export function lyricTracks(tracks: Track[]): Track[] {
+  const withLyrics = tracks.filter((t) => hasLyrics(t) && !isGuitar(t));
+  const vocals = withLyrics.filter((t) => /vocal|voice|sing/i.test(fullName(t)));
+  return vocals.length ? vocals : withLyrics.slice(0, 1);
+}
+
+/**
+ * Part choices: 'sing' (vocal line with lyrics on top, guitars under it),
+ * 'guitars' (all guitars stacked), 'all' (every part stacked) or a track index.
+ */
+export type GpPart = 'sing' | 'guitars' | 'all' | number;
+
+export function parsePart(v: string): GpPart {
+  return v === 'sing' || v === 'guitars' || v === 'all' ? v : Number(v);
+}
 
 export function partOptions(song: GpSong): { value: string; label: string }[] {
   const tracks = song.score.tracks;
   const guitars = tracks.filter(isGuitar);
   const opts: { value: string; label: string }[] = [];
+  if (lyricTracks(tracks).length && guitars.length) opts.push({ value: 'sing', label: `Lyrics + guitar${guitars.length > 1 ? 's' : ''}` });
   if (guitars.length > 1) opts.push({ value: 'guitars', label: `All guitars (${guitars.length}, stacked)` });
   opts.push({ value: 'all', label: `Every part (${tracks.length}, stacked)` });
   tracks.forEach((t) => opts.push({ value: String(t.index), label: trackName(t) }));
@@ -81,6 +101,7 @@ export function partOptions(song: GpSong): { value: string; label: string }[] {
 
 export function defaultPart(song: GpSong): GpPart {
   const guitars = song.score.tracks.filter(isGuitar);
+  if (guitars.length && lyricTracks(song.score.tracks).length) return 'sing';
   return guitars.length > 1 ? 'guitars' : guitars.length ? guitars[0].index : 'all';
 }
 
@@ -88,6 +109,7 @@ function tracksFor(song: GpSong, part: GpPart): Track[] {
   const all = song.score.tracks;
   if (part === 'all') return all;
   if (part === 'guitars') return all.filter(isGuitar);
+  if (part === 'sing') return [...lyricTracks(all), ...all.filter(isGuitar)];
   return [all[part] ?? all[0]];
 }
 
