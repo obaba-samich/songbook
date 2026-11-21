@@ -1,0 +1,95 @@
+# The House of the Rising Sun — traditional American folk song. Public domain
+# (traditional verses only). Shows: two guitar parts (strummed rhythm + picked
+# arpeggio tab), 6/8 time, palm-mute annotation, hammer-on, pull-off, vibrato,
+# repeated sections, multi-system tab.
+{title: The House of the Rising Sun}
+{artist: Traditional}
+{key: Am}
+{tempo: 80}
+{time: 6/8}
+{comment: Arpeggio tab is a common folk pattern, not any specific recording.}
+
+{strum: six = D - D U D U}
+{strum: accent = D - - D - -}
+
+{guitar: Rhythm}
+{guitar: Picking}
+
+{section: Intro}
+{use: accent x8}
+[Am] [C] [D] [F]
+[Am] [C] [E] [E]
+{guitar: Picking}
+{tab}
+e|----------0-|--------0---|------2-----|------1-----|
+B|--------1---|------1---1-|----3---3---|----1---1---|
+G|------2-----|----0-------|--2-------2-|--2-------2-|
+D|--0h2-------|--2---------|0-----------|3-----------|
+A|0-----------|3-----------|------------|------------|
+E|------------|------------|------------|------------|
+
+e|--------0---|--------0---|------------|------------|
+B|------1---1-|------1---1-|------0-----|------0-----|
+G|----2-------|----0-------|----1---1---|--1p0---1---|
+D|--2---------|--2---------|--2-------2-|----------2-|
+A|0-----------|3-----------|------------|------------|
+E|------------|------------|0-----------|0-----------|
+{end_tab}
+
+{section: Verse 1}
+{use: six x16}
+{comment: Picking: keep the intro arpeggio going over these chords}
+There [Am]is a [C]house in [D]New Or[F]leans
+They [Am]call the [C]Rising [E]Sun [E]
+And it's [Am]been the [C]ruin of [D]many a poor [F]boy
+And [Am]God, I [E]know I'm [Am]one [E]
+
+{section: Verse 2}
+{use: six x16}
+Go [Am]tell my [C]baby [D]sister [F]
+Never [Am]do like [C]I have [E]done [E]
+To [Am]shun that [C]house in [D]New Or[F]leans
+They [Am]call the [E]Rising [Am]Sun [E]
+
+{section: Verse 3}
+{use: six x16}
+One [Am]foot is [C]on the [D]platform [F]
+The [Am]other is [C]on the [E]train [E]
+I'm [Am]going [C]back to [D]New Or[F]leans
+To [Am]wear that [E]ball and [Am]chain [E]
+
+{section: Instrumental}
+{use: accent x8}
+[Am] [C] [D] [F]
+[Am] [E] [Am] [E]
+{tab: Picking}
+  PM----------|PM----------|
+e|------------|------------|------2-----|------1-----|
+B|----------1-|----------1-|----3---3---|----1---1---|
+G|--------2---|--------0---|--2-------2-|--2-------2-|
+D|------2-----|------2-----|0-----------|3-----------|
+A|0-0-0-------|3-3-3-------|------------|------------|
+E|------------|------------|------------|------------|
+
+e|--------0---|------------|--------0---|--------0~~~|
+B|------1---1-|------0-----|------1---1-|----0-------|
+G|----2-------|----1---1---|----2-------|------------|
+D|--2---------|--2-------2-|--2---------|------------|
+A|0-----------|------------|0-----------|------------|
+E|------------|0-----------|------------|0-----------|
+{end_tab}
+
+{section: Outro}
+{use: six x1, accent x1}
+[Am] [Am]
+{comment: Let the last Am ring out}
+{tab: Picking}
+e|--------0---|--------0~~~|
+B|------1---1-|------1-----|
+G|----2-------|----2-------|
+D|--2---------|--2---------|
+A|0-----------|0-----------|
+E|------------|------------|
+{end_tab}
+
+{order: Intro, Verse 1, Verse 2, Instrumental, Verse 3, Instrumental, Verse 1, Outro}

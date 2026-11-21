@@ -1,0 +1,72 @@
+# Amazing Grace — words John Newton (1779), tune "New Britain" (1835). Public domain.
+# Shows: capo, 3/4 time, custom voicings, two strum patterns, a repeated
+# section, a mid-word chord, intro tab with a hammer-on and vibrato, and a
+# second guitar playing the same song without a capo (A shapes).
+{title: Amazing Grace}
+{artist: John Newton (traditional)}
+{key: A}
+{capo: 2}
+{tempo: 76}
+{time: 3/4}
+{comment: Intro tab is the melody, simplified — check it against the tune by ear.}
+
+{define: G 3 2 0 0 3 3 fingers 2 1 0 0 3 4}
+{define: Gsus4 3 3 0 0 1 3 fingers 2 3 0 0 1 4}
+
+{strum: waltz = D - D U D U}
+{strum: ring = D - - - - -}
+
+{guitar: Capo 2}
+{guitar: No capo}
+{capo: 0}
+
+{section: Intro}
+{use: ring x5}
+[G] [C] [G] [D]
+{tab}
+e|--|------------|------------|------------|------------|
+B|--|--------0---|0-----------|------------|------------|
+G|--|0---------0-|------0h2---|0-----------|------------|
+D|0-|------------|------------|--------2---|0~~---------|
+A|--|------------|------------|------------|------------|
+E|--|------------|------------|------------|------------|
+{end_tab}
+
+{section: Verse 1}
+{use: waltz x16}
+A[G]mazing [G7]grace! How [C]sweet the [G]sound
+That [G]saved a [Em]wretch like [D]me! [D7]
+I [G]once was [G7]lost, but [C]now am [G]found;
+Was [Em]blind, but [D]now I [G]see. [Gsus4] [G]
+
+{section: Verse 2}
+{use: waltz x16}
+'Twas [G]grace that [G7]taught my [C]heart to [G]fear,
+And [G]grace my [Em]fears re[D]lieved; [D7]
+How [G]precious [G7]did that [C]grace ap[G]pear
+The [Em]hour I [D]first be[G]lieved! [Gsus4] [G]
+
+{section: Verse 3}
+{use: waltz x16}
+Through [G]many [G7]dangers, [C]toils and [G]snares,
+I [G]have al[Em]ready [D]come; [D7]
+'Tis [G]grace hath [G7]brought me [C]safe thus [G]far,
+And [Em]grace will [D]lead me [G]home. [Gsus4] [G]
+
+{section: Verse 4}
+{use: waltz x16}
+When [G]we've been [G7]there ten [C]thousand [G]years,
+Bright [G]shining [Em]as the [D]sun, [D7]
+We've [G]no less [G7]days to [C]sing God's [G]praise
+Than [Em]when we'd [D]first be[G]gun. [Gsus4] [G]
+
+{section: Turnaround}
+{use: waltz x4}
+[G] [C] [G] [D7]
+
+{section: Outro}
+{use: ring x3}
+{comment: Slow down and let the last chord ring}
+[C] [Gsus4] [G]
+
+{order: Intro, Verse 1, Turnaround, Verse 2, Turnaround, Verse 3, Turnaround, Verse 4, Outro}
