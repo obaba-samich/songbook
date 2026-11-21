@@ -11,6 +11,9 @@ export interface ViewCtx {
   showStringNames: boolean;
   /** Width available for a tab staff row, in em of the song text size. */
   tabWidthEm: number;
+  /** Chord chart: bars per row (0 = per lyric line) and size. */
+  chartPerRow?: number;
+  chartSize?: 's' | 'm' | 'l';
 }
 
 export const chordName = (ctx: ViewCtx, name: string) => displayChord(name, ctx.song, ctx.settings);

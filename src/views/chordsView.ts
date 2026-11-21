@@ -12,7 +12,7 @@ export function renderChordsView(ctx: ViewCtx): string {
     .map((s) => {
       const n = times(s);
       const badge = n > 1 ? ` <span class="played" title="Played ${n} times in the song">played ×${n}</span>` : '';
-      return `<section class="sec"><h2 class="sec-label">${esc(s.name)}${badge}</h2>${sectionComments(s)}${renderChart(sectionChart(s, ctx), ctx.song.meta.time)}</section>`;
+      return `<section class="sec"><h2 class="sec-label">${esc(s.name)}${badge}</h2>${sectionComments(s)}${renderChart(sectionChart(s, ctx), ctx.song.meta.time, ctx.chartPerRow ?? 8, ctx.chartSize ?? 'm')}</section>`;
     })
     .join('');
   return `${songHeader(ctx)}<div class="view-chords">${body}</div>${diagramsBlock(ctx)}${orderBlock(ctx.song)}`;

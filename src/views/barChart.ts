@@ -63,7 +63,12 @@ function strumHtml(strokes: Stroke[], time: string): string {
     .join('')}</span>`;
 }
 
-export function renderChart(bars: ChartBar[], time: string): string {
+export type ChartSize = 's' | 'm' | 'l';
+
+/**
+ * Draw the chart. `perRow` = bars per row (0 = one row per lyric line, wrapped at 4).
+ */
+export function renderChart(bars: ChartBar[], time: string, perRow = 8, size: ChartSize = 'm'): string {
   if (!bars.length) return '<p class="muted">No chords in this section.</p>';
   const rows: ChartBar[][] = [];
   for (const b of bars) {
@@ -81,7 +86,14 @@ export function renderChart(bars: ChartBar[], time: string): string {
       : `Same strum as the previous bar, but change to ${b.chords.join(' then ')}`;
     return `<div class="cb-bar ${b.kind}"><div class="cb-chords">${b.kind === 'chord' ? names : ''}</div><span class="cb-repeat" data-tip="${esc(tip)}">%</span></div>`;
   };
-  // Four bars to a row, like a lead sheet; a line's bars never mix with the next line's.
-  const chunks: ChartBar[][] = rows.flatMap((r) => Array.from({ length: Math.ceil(r.length / 4) }, (_, i) => r.slice(i * 4, i * 4 + 4)));
-  return `<div class="chart">${chunks.map((r) => `<div class="cb-row">${r.map(cell).join('')}</div>`).join('')}</div>`;
+  let chunks: ChartBar[][];
+  if (perRow > 0) {
+    chunks = [];
+    for (let i = 0; i < bars.length; i += perRow) chunks.push(bars.slice(i, i + perRow));
+  } else {
+    // One row per lyric line, four bars at most, like a lead sheet.
+    chunks = rows.flatMap((r) => Array.from({ length: Math.ceil(r.length / 4) }, (_, i) => r.slice(i * 4, i * 4 + 4)));
+  }
+  const cols = Math.max(...chunks.map((c) => c.length));
+  return `<div class="chart size-${size}" style="--cb-cols:${cols}">${chunks.map((r) => `<div class="cb-row">${r.map(cell).join('')}</div>`).join('')}</div>`;
 }

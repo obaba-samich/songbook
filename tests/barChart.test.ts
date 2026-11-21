@@ -43,6 +43,15 @@ describe('bar-by-bar chord chart', () => {
     expect(html).toContain('<i>&</i>'); // counts under the arrows
   });
 
+  it('puts the chosen number of bars in a row, or one row per lyric line', () => {
+    const bars = chart('{use: main x16}\n[G]a [C]b [D]c [G]d\n[G]a [C]b [D]c [G]d');
+    const rows = (html: string) => html.match(/class="cb-row"/g)!.length;
+    expect(rows(renderChart(bars, '4/4', 8))).toBe(2);
+    expect(rows(renderChart(bars, '4/4', 4))).toBe(4);
+    expect(rows(renderChart(bars, '4/4', 0))).toBe(4); // per line: 8 bars a line → wrapped at 4
+    expect(renderChart(bars, '4/4', 8, 's')).toContain('chart size-s');
+  });
+
   it('uses displayed chord names (capo / transpose)', () => {
     const src = '{title: T}\n{artist: A}\n{key: A}\n{capo: 2}\n{strum: m = D}\n{section: V}\n{use: m x1}\n[G]a';
     const ctx = ctxFor(src);
