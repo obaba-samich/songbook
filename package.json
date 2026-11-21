@@ -1,0 +1,23 @@
+{
+  "name": "songbook",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Local guitar songbook: one .gsong file per song, rendered as tab, chords, or lyrics + chords.",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "validate": "tsx scripts/validate.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.7",
+    "vite-plugin-singlefile": "^2.1.0",
+    "vitest": "^2.1.8"
+  }
+}
