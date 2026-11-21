@@ -128,6 +128,22 @@ export interface StaffOptions {
   time?: string;
   showTimeSig?: boolean;
   tempo?: number | null;
+  /** Force row breaks: number of measures in each row (used to line up stacked parts). */
+  rowMeasures?: number[];
+  /** Layout width per measure (stacked parts use the widest part's width so bar lines line up). */
+  measureWidths?: number[];
+  /** Only measure, don't draw: returns each measure's natural width. */
+  measureOnly?: boolean;
+}
+
+/** Natural width of every measure, so stacked parts can share row breaks. */
+export function staffMeasureWidths(systems: StaffSystem[], o: StaffOptions): number[] {
+  return renderStaff(systems, { ...o, measureOnly: true }).widths ?? [];
+}
+
+/** Room for measures in a row (the first row also holds the time signature). */
+export function staffRowRoom(o: StaffOptions, firstRow: boolean): number {
+  return Math.max(20, o.widthEm) * U - 22 - (firstRow && o.showTimeSig ? 18 : 0);
 }
 
 const isNote = (t: TabToken) => t.kind === 'fret' || t.kind === 'ghost' || t.kind === 'muted';
@@ -147,7 +163,7 @@ const tipAttr = (t: string | null | undefined) => (t ? ` data-tip="${esc(t)}"` :
 
 const NOTE_NAMES: Record<number, string> = { 16: 'whole note', 8: 'half note', 4: 'quarter note', 2: 'eighth note', 1: 'sixteenth note' };
 
-export function renderStaff(systems: StaffSystem[], o: StaffOptions): { html: string; measures: number } {
+export function renderStaff(systems: StaffSystem[], o: StaffOptions): { html: string; measures: number; rows: string[]; widths?: number[] } {
   const lines = o.tuning.notes.length;
   const labels = [...o.tuning.notes].reverse().map((n, i) => (i === 0 ? n.toLowerCase() : n));
   const lowIndex = (row: number) => lines - 1 - row;
@@ -173,7 +189,10 @@ export function renderStaff(systems: StaffSystem[], o: StaffOptions): { html: st
       });
     });
   });
-  if (!measures.length) return { html: '', measures: 0 };
+  if (!measures.length) return { html: '', measures: 0, rows: [] };
+  if (o.measureOnly) return { html: '', measures: measures.length, rows: [], widths: measures.map((m) => m.natural) };
+  const lw = (m: Measure, i: number) => Math.max(m.natural, o.measureWidths?.[i] ?? 0);
+  const layoutW = new Map(measures.map((m, i) => [m, lw(m, i)]));
 
   // ---- rows (greedy fill, then justify) ----
   const total = Math.max(20, o.widthEm) * U;
@@ -182,23 +201,31 @@ export function renderStaff(systems: StaffSystem[], o: StaffOptions): { html: st
   const rows: Measure[][] = [];
   let cur: Measure[] = [];
   let used = 0;
-  for (const m of measures) {
-    const avail = total - clefW - (rows.length === 0 ? sigW : 0);
-    if (cur.length && used + m.natural > avail) { rows.push(cur); cur = []; used = 0; }
-    cur.push(m);
-    used += m.natural;
+  if (o.rowMeasures) {
+    let i = 0;
+    for (const n of o.rowMeasures) { if (i < measures.length) rows.push(measures.slice(i, i + n)); i += n; }
+    if (i < measures.length) rows.push(measures.slice(i));
+  } else {
+    for (const m of measures) {
+      const avail = total - clefW - (rows.length === 0 ? sigW : 0);
+      if (cur.length && used + layoutW.get(m)! > avail) { rows.push(cur); cur = []; used = 0; }
+      cur.push(m);
+      used += layoutW.get(m)!;
+    }
+    if (cur.length) rows.push(cur);
   }
-  if (cur.length) rows.push(cur);
 
   const svgs = rows.map((row, ri) => {
     const first = ri === 0;
     const startX = clefW + (first ? sigW : 0);
-    const natural = row.reduce((a, m) => a + m.natural, 0);
+    const natural = row.reduce((a, m) => a + layoutW.get(m)!, 0);
     const avail = total - startX;
-    const lastRow = ri === rows.length - 1;
+    // Stacked parts share breaks, so a short last row is still justified like the others.
+    const lastRow = ri === rows.length - 1 && !o.rowMeasures;
     const scale = !lastRow || natural / avail > 0.55 ? Math.min(avail / natural, 3) : Math.min(avail / natural, 1.5);
     let x = startX;
-    for (const m of row) { m.x = x; m.scale = scale; m.row = ri; x += m.natural * scale; }
+    // A measure widened to match a stacked part spreads its notes out to fill it.
+    for (const m of row) { const w = layoutW.get(m)!; m.x = x; m.scale = scale * (w / m.natural); m.row = ri; x += w * scale; }
     const endX = x;
     const width = Math.ceil(first || !lastRow ? total : Math.max(endX + 2, total * 0.4));
     const yS = (r: number) => TOP + r * GAP;
@@ -437,5 +464,5 @@ export function renderStaff(systems: StaffSystem[], o: StaffOptions): { html: st
     return `<svg class="staff-row" viewBox="0 0 ${width} ${height}" style="width:${(width / U).toFixed(3)}em" role="img" aria-label="Tab, measures ${row[0].number}–${row[row.length - 1].number}">${tempo}<g transform="translate(0 ${dy})">${parts.join('')}</g></svg>`;
   });
 
-  return { html: `<div class="staff">${svgs.join('')}</div>`, measures: measures.length };
+  return { html: `<div class="staff">${svgs.join('')}</div>`, measures: measures.length, rows: svgs };
 }

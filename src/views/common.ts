@@ -14,6 +14,8 @@ export interface ViewCtx {
   /** Chord chart: bars per row (0 = per lyric line) and size. */
   chartPerRow?: number;
   chartSize?: 's' | 'm' | 'l';
+  /** Tab view: show every guitar part stacked (when the song has several). */
+  stacked?: boolean;
 }
 
 export const chordName = (ctx: ViewCtx, name: string) => displayChord(name, ctx.song, ctx.settings);
@@ -124,7 +126,7 @@ export function songHeader(ctx: ViewCtx): string {
   if (song.meta.tempo) bits.push(`${song.meta.tempo} BPM`);
   bits.push(esc(song.meta.time));
   if (g.tuning.name !== 'Standard') bits.push(`Tuning: ${esc(g.tuning.name)} (${esc(g.tuning.notes.join(' '))})`);
-  if (song.guitars.length > 1) bits.push(`Part: ${esc(g.name)}`);
+  if (song.guitars.length > 1) bits.push(ctx.stacked ? `Parts: ${song.guitars.map((x) => esc(x.name)).join(' + ')}` : `Part: ${esc(g.name)}`);
   if (settings.transpose) bits.push(`Transposed ${settings.transpose > 0 ? '+' : ''}${settings.transpose}`);
   return `<header class="song-head">
     <h1>${esc(song.meta.title || 'Untitled')}</h1>

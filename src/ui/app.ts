@@ -29,10 +29,12 @@ interface Prefs {
   sidebar: boolean;
   chartPerRow: number;
   chartSize: 's' | 'm' | 'l';
+  /** Tab view: stack every guitar part (songs with several guitars). */
+  stacked: boolean;
 }
 
 const PREFS_KEY = 'songbook.prefs.v1';
-const DEFAULT_PREFS: Prefs = { view: 'lyrics', fontSize: 20, theme: 'system', showStringNames: true, speed: 4, last: null, sidebar: true, chartPerRow: 8, chartSize: 'm' };
+const DEFAULT_PREFS: Prefs = { view: 'lyrics', fontSize: 20, theme: 'system', showStringNames: true, speed: 4, last: null, sidebar: true, chartPerRow: 8, chartSize: 'm', stacked: true };
 
 function loadPrefs(): Prefs {
   try {
@@ -205,12 +207,14 @@ export function startApp(root: HTMLElement, bundled: Record<string, string>): vo
     }
     const song = current.result.song;
     guitarSel.hidden = song.guitars.length < 2;
-    guitarSel.innerHTML = song.guitars.map((g, i) => `<option value="${i}">${esc(g.name)}</option>`).join('');
-    guitarSel.value = String(settings.guitar);
+    const canStack = prefs.view === 'tab' && song.guitars.length > 1;
+    guitarSel.innerHTML = (canStack ? '<option value="all">All parts (stacked)</option>' : '')
+      + song.guitars.map((g, i) => `<option value="${i}">${esc(g.name)}</option>`).join('');
+    guitarSel.value = canStack && prefs.stacked ? 'all' : String(settings.guitar);
     capoSel.value = String(settings.capo);
     $('.tr-val').textContent = settings.transpose > 0 ? `+${settings.transpose}` : String(settings.transpose);
     renderDiagnostics(current);
-    const ctx: ViewCtx = { song, settings, showStringNames: prefs.showStringNames, tabWidthEm: measureTabWidth(), chartPerRow: prefs.chartPerRow, chartSize: prefs.chartSize };
+    const ctx: ViewCtx = { song, settings, showStringNames: prefs.showStringNames, tabWidthEm: measureTabWidth(), chartPerRow: prefs.chartPerRow, chartSize: prefs.chartSize, stacked: prefs.view === 'tab' && prefs.stacked };
     article.innerHTML = prefs.view === 'tab' ? renderTabView(ctx) : prefs.view === 'chords' ? renderChordsView(ctx) : renderLyricsView(ctx);
     document.title = `${song.meta.title || current.fileName} — Songbook`;
   }
@@ -293,6 +297,8 @@ export function startApp(root: HTMLElement, bundled: Record<string, string>): vo
   $('.search').addEventListener('input', (e) => { search = (e.target as HTMLInputElement).value; renderList(); });
   guitarSel.addEventListener('change', () => {
     if (!current || !settings) return;
+    if (guitarSel.value === 'all') { prefs.stacked = true; savePrefs(prefs); render(); return; }
+    if (prefs.view === 'tab') { prefs.stacked = false; savePrefs(prefs); }
     const g = Number(guitarSel.value);
     settings = { ...defaultSettings(current.result.song, g), transpose: settings.transpose };
     render();
