@@ -4,13 +4,13 @@ export const TAB_HELP_HTML = `
 <p>Tab is a picture of the guitar neck, lying flat. Each of the 6 lines is a string.</p>
 
 <h3>The strings</h3>
-<pre class="tab help-tab">e|---------  ← thinnest string (high e), nearest the floor
-B|---------
-G|---------
-D|---------
-A|---------
-E|---------  ← thickest string (low E), nearest your face</pre>
-<p><b>High e is on top, low E on the bottom</b> — upside-down from how you look down at the guitar.
+<pre class="tab help-tab">e|------  ← high e (thinnest)
+B|------
+G|------
+D|------
+A|------
+E|------  ← low E (thickest)</pre>
+<p><b>High e is on top, low E on the bottom</b> — upside-down from how you look down at the guitar: the top line is the string nearest the floor.
 Turn on <i>String names</i> in the toolbar to see the names on every line.</p>
 
 <h3>The numbers</h3>
