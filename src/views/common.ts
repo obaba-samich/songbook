@@ -74,12 +74,14 @@ export function renderStrum(p: StrumPattern | undefined, ref: StrumRef, time: st
       return `<span class="stroke ${st.cls}" data-tip="${esc(st.tip)}"><b>${st.glyph}</b>${counts ? `<i>${esc(counts[i])}</i>` : ''}</span>`;
     })
     .join('');
-  const rep = ref.repeat > 1;
+  // In compact form (above lyrics) the pattern is one bar, played every bar — no repeat count.
+  const rep = ref.repeat > 1 && !compact;
   return `<div class="strum${compact ? ' compact' : ''}">
     <span class="strum-name">${esc(p.name)}</span>
     ${rep ? '<span class="repeat-mark" data-tip="Repeat sign: play this pattern again">‖:</span>' : ''}
     <span class="strokes">${cells}</span>
     ${rep ? `<span class="repeat-mark" data-tip="End of repeat">:‖</span><span class="times" data-tip="Play the pattern ${ref.repeat} times">×${ref.repeat}</span>` : ''}
+    ${compact ? '<span class="strum-every" data-tip="This pattern is one bar long. Play it once for every bar, changing chord where the chord names are.">every bar</span>' : ''}
   </div>`;
 }
 
