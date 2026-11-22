@@ -48,6 +48,19 @@ export function trackName(t: Track): string {
   return n.split(' - ')[0].trim() || n;
 }
 
+/** Track names, with the sound added where two parts share a name ("Lead Guitar (Acoustic Guitar (steel))"). */
+function trackLabels(tracks: Track[]): Map<number, string> {
+  const names = new Map(tracks.map((t) => [t.index, trackName(t)]));
+  const count = new Map<string, number>();
+  for (const n of names.values()) count.set(n, (count.get(n) ?? 0) + 1);
+  for (const t of tracks) {
+    const n = names.get(t.index)!;
+    const sound = (t.name || '').split('|').pop()!.split(' - ')[1]?.trim();
+    if (count.get(n)! > 1 && sound) names.set(t.index, `${n} (${sound})`);
+  }
+  return names;
+}
+
 const fullName = (t: Track) => `${t.name} ${t.shortName}`;
 
 /**
@@ -98,13 +111,15 @@ export function partOptions(song: GpSong): { value: string; label: string }[] {
   const shown = tracks.filter((t) => isGuitar(t) || isBass(t));
   // A file with no guitar or bass at all: show every part rather than nothing.
   if (!shown.length) opts.push({ value: 'all', label: `Every part (${tracks.length}, stacked)` });
-  shown.forEach((t) => opts.push({ value: String(t.index), label: trackName(t) }));
+  const labels = trackLabels(tracks);
+  shown.forEach((t) => opts.push({ value: String(t.index), label: labels.get(t.index)! }));
   return opts;
 }
 
 /** Every part, for the "instruments that play" checkboxes. */
 export function playableTracks(song: GpSong): { index: number; label: string }[] {
-  return song.score.tracks.map((t) => ({ index: t.index, label: trackName(t) }));
+  const labels = trackLabels(song.score.tracks);
+  return song.score.tracks.map((t) => ({ index: t.index, label: labels.get(t.index)! }));
 }
 
 export function defaultPart(song: GpSong): GpPart {

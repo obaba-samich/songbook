@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { defaultPart, isBass, isGuitar, lyricTracks, partOptions, playableTracks, trackName } from '../src/ui/gpView';
 
 // Minimal stand-ins for alphaTab tracks (real Guitar Pro files can't live in the public repo).
-const track = (name: string, o: { strings?: number; perc?: boolean; stringed?: boolean; lyrics?: boolean; index?: number } = {}) => ({
-  name, shortName: '', index: o.index ?? 0, isPercussion: !!o.perc,
+const track = (name: string, o: { strings?: number; perc?: boolean; stringed?: boolean; lyrics?: boolean; index?: number; program?: number } = {}) => ({
+  name, shortName: '', index: o.index ?? 0, isPercussion: !!o.perc, playbackInfo: o.program === undefined ? undefined : { program: o.program },
   staves: [{ isStringed: o.stringed ?? !o.perc, tuning: Array(o.strings ?? 6).fill(40), bars: [{ voices: [{ beats: [{ lyrics: o.lyrics ? ['la'] : null }] }] }] }],
 }) as never;
 const song = (...tracks: never[]) => ({ title: '', artist: '', bytes: new Uint8Array(), score: { tracks } }) as never;
@@ -58,5 +58,13 @@ describe('Guitar Pro tracks', () => {
     );
     expect(partOptions(s).map((o) => o.value)).toEqual(['sing', 'guitars', '1', '2', '3']);
     expect(playableTracks(s).map((t) => t.label)).toEqual(['Vocals', 'Rhythm Guitar', 'Lead Guitar', 'Bass', 'Fiddle', 'Drums']);
+  });
+
+  it('tells apart two parts with the same name by their sound', () => {
+    const s = song(
+      track('Noel Gallagher | Takamine | Lead Guitar - Acoustic Guitar (steel)', { index: 0 }),
+      track('Noel Gallagher | Fender Stratocaster | Lead Guitar - Electric Guitar (clean)', { index: 1 }),
+    );
+    expect(partOptions(s).slice(1).map((o) => o.label)).toEqual(['Lead Guitar (Acoustic Guitar (steel))', 'Lead Guitar (Electric Guitar (clean))']);
   });
 });
