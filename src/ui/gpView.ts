@@ -144,6 +144,8 @@ export interface GpViewOptions {
   /** 1 = default size. */
   scale: number;
   showStringNames: boolean;
+  /** Draw for paper: black ink, and every page at once (not only what's on screen). */
+  forPrint?: boolean;
   /** Track indexes that stay silent during playback. */
   muted?: ReadonlySet<number>;
   onPlayState?: (playing: boolean) => void;
@@ -165,12 +167,13 @@ export class GpView {
   constructor(el: HTMLElement, song: GpSong, part: GpPart, o: GpViewOptions) {
     this.song = song;
     this.muted = new Set(o.muted ?? []);
-    const c = o.dark ? COLORS.dark : COLORS.light;
+    const c = o.dark && !o.forPrint ? COLORS.dark : COLORS.light;
     const settings = {
       core: {
         smuflFontSources: new Map([[alphaTab.FontFileFormat.Woff2, bravuraWoff2], [alphaTab.FontFileFormat.Woff, bravuraWoff]]),
         // Render on the page (no worker files to serve; works from file:// too).
         useWorkers: false,
+        enableLazyLoading: !o.forPrint,
       },
       display: {
         // Rhythm stems under the tab numbers.
@@ -204,7 +207,7 @@ export class GpView {
       this.playing = e.state === alphaTab.synth.PlayerState.Playing;
       o.onPlayState?.(this.playing);
     });
-    if (o.onReady) this.api.renderFinished.on(() => o.onReady!());
+    if (o.onReady) { let once = false; this.api.renderFinished.on(() => { if (!once) { once = true; o.onReady!(); } }); }
     this.api.renderScore(song.score, tracksFor(song, part).map((t) => t.index));
   }
 

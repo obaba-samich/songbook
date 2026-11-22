@@ -270,6 +270,18 @@ export function startApp(root: HTMLElement, bundled: Record<string, string>, gpF
     });
     gpView.speed = speedFactor();
   }
+  /** Guitar Pro tab: redraw it in black with every page drawn, print, then put the screen version back. */
+  function printSong() {
+    if (!gpView || !current?.gp) { window.print(); return; }
+    const host = article.querySelector<HTMLElement>('.gp-score');
+    if (!host) { window.print(); return; }
+    gpView.destroy();
+    host.innerHTML = '';
+    gpView = new GpView(host, current.gp, gpPart, {
+      dark: false, forPrint: true, scale: 0.8, showStringNames: prefs.showStringNames,
+      onReady: () => setTimeout(() => { window.print(); redrawGp(); }, 50),
+    });
+  }
   const speedFactor = () => [0.25, 0.4, 0.5, 0.6, 0.75, 0.85, 1, 1.1, 1.25, 1.5][Number(speed.value) - 1] ?? 1;
   /** Force alphaTab to redraw (theme, size or string-name change). */
   function redrawGp() { if (gpView) { gpView.destroy(); gpView = null; render(); } }
@@ -379,7 +391,7 @@ export function startApp(root: HTMLElement, bundled: Record<string, string>, gpF
     if (vb) { prefs.view = vb.dataset.view as View; savePrefs(prefs); render(); return; }
     if (!t.closest('.settings-menu')) menu.open = false;
     if (!t.closest('.mix-menu')) mixMenu.open = false;
-    if (!settings && !t.closest('.sidebar-toggle, .help-btn, .help-close, .fs-up, .fs-down, .scroll-btn')) return;
+    if (!settings && !t.closest('.sidebar-toggle, .help-btn, .help-close, .fs-up, .fs-down, .scroll-btn, .print-btn')) return;
     if (t.closest('.tr-up')) { settings!.transpose = Math.min(11, settings!.transpose + 1); render(); }
     else if (t.closest('.tr-down')) { settings!.transpose = Math.max(-11, settings!.transpose - 1); render(); }
     else if (t.closest('.tr-val')) { settings!.transpose = 0; render(); }
@@ -389,7 +401,7 @@ export function startApp(root: HTMLElement, bundled: Record<string, string>, gpF
     else if (t.closest('.sidebar-toggle')) { prefs.sidebar = !prefs.sidebar; shell.classList.toggle('no-sidebar', !prefs.sidebar); savePrefs(prefs); render(); }
     else if (t.closest('.help-btn')) { helpPanel.hidden = !helpPanel.hidden; }
     else if (t.closest('.help-close')) { helpPanel.hidden = true; }
-    else if (t.closest('.print-btn')) { window.print(); }
+    else if (t.closest('.print-btn')) { printSong(); }
   });
   mixList.addEventListener('change', (ev) => {
     const box = ev.target as HTMLInputElement;
