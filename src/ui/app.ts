@@ -10,6 +10,7 @@ import { esc } from '../views/html';
 import { installTooltips } from './tooltip';
 import { TAB_HELP_HTML } from './tabHelp';
 import { defaultPart, GP_EXT, GpView, loadGp, parsePart, partOptions, playableTracks, type GpPart, type GpSong } from './gpView';
+import { gpToGsong } from './gpChart';
 
 type View = 'tab' | 'chords' | 'lyrics';
 
@@ -21,6 +22,8 @@ interface Entry {
   /** … or a Guitar Pro file (plus, when a .gsong of the same name exists, its chords and lyrics in `result`). */
   gp?: GpSong;
   source: 'library' | 'loaded';
+  /** `result` was made from the Guitar Pro file (not a .gsong someone wrote): don't list its parse warnings. */
+  generated?: boolean;
 }
 
 interface Prefs {
@@ -201,7 +204,7 @@ export function startApp(root: HTMLElement, bundled: Record<string, string>, gpF
   }
 
   function renderDiagnostics(e: Entry) {
-    if (!e.result) { diag.innerHTML = ''; return; }
+    if (!e.result || e.generated) { diag.innerHTML = ''; return; }
     const ds = e.result.diagnostics;
     if (!ds.length) { diag.innerHTML = ''; return; }
     const errs = ds.filter((d) => d.severity === 'error');
@@ -301,7 +304,11 @@ export function startApp(root: HTMLElement, bundled: Record<string, string>, gpF
 
   function gpEntry(id: string, fileName: string, bytes: Uint8Array, source: Entry['source']): Entry | null {
     try {
-      return { id, fileName, gp: loadGp(bytes, fileName), source };
+      const gp = loadGp(bytes, fileName);
+      // Chords and Lyrics views straight from the file: its chord names, lyrics and sections.
+      let result: ParseResult | undefined;
+      try { result = parseSong(gpToGsong(gp)); } catch { result = undefined; }
+      return { id, fileName, gp, source, result, generated: !!result };
     } catch (err) {
       diag.innerHTML = `<div class="diag-box err"><h3>Couldn't read ${esc(fileName)}</h3><p class="small">${esc(String((err as Error)?.message ?? err))}</p></div>`;
       return null;
@@ -315,10 +322,11 @@ export function startApp(root: HTMLElement, bundled: Record<string, string>, gpF
       if (!e) return;
       // songs/x.gp + songs/x.gsong = one song: real tab from the .gp, chords and lyrics from the .gsong.
       const stem = baseName(path).replace(GP_EXT, '');
-      const twin = entries.findIndex((x) => x.result && !x.gp && x.fileName.replace(/\.gsong$/i, '') === stem);
+      const twin = entries.findIndex((x) => x.result && !x.gp && !x.generated && x.fileName.replace(/\.gsong$/i, '') === stem);
       let wasLast = false;
       if (twin >= 0) {
         e.result = entries[twin].result;
+        e.generated = false;
         wasLast = prefs.last === entries[twin].id;
         if (current === entries[twin]) { current = null; wasLast = true; }
         entries.splice(twin, 1);

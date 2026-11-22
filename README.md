@@ -41,8 +41,10 @@ auto-scrolls instead.
 
 A Guitar Pro file and a `.gsong` with the same name (`songs/x.gp` +
 `songs/x.gsong`) become one song: Tab shows the Guitar Pro tab, and Chords and
-Lyrics come from the `.gsong`. Without a matching `.gsong`, a Guitar Pro song
-only has the Tab view.
+Lyrics come from the `.gsong`. Without a matching `.gsong`, Chords and Lyrics
+are made from the Guitar Pro file itself: chord names and their shapes from the
+strummed guitar part, words from the vocal line's lyrics, sections from its
+section markers (Songsterr exports have all three).
 
 ## Views
 
