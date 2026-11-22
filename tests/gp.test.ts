@@ -23,6 +23,8 @@ describe('Guitar Pro tracks', () => {
     expect(isGuitar(track('Electric Bass (finger)', { strings: 4 }))).toBe(false);
     expect(isGuitar(track('Drums', { perc: true }))).toBe(false);
     expect(isGuitar(track('Track 1'))).toBe(true);
+    expect(isGuitar(track('Track 1', { program: 25 }))).toBe(true);
+    expect(isGuitar(track('Bird Tweet', { program: 123 }))).toBe(false);
   });
 
   it('bass is tab too, contrabass is not', () => {

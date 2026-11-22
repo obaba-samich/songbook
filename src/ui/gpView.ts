@@ -72,6 +72,9 @@ export function isGuitar(t: Track): boolean {
   if (/bass/i.test(fullName(t))) return false;
   if (/guitar|gtr/i.test(fullName(t))) return true;
   if (/vocal|voice|sax|piano|keys|organ|synth|violin|viola|cello|string|wind|flute|trumpet|horn|harmonica|fiddle/i.test(fullName(t))) return false;
+  // No name to go by: use the General MIDI sound (24–31 are the guitars), so "Bird Tweet" isn't one.
+  const program = t.playbackInfo?.program;
+  if (program !== undefined) return program >= 24 && program <= 31;
   return t.staves[0].tuning.length >= 6;
 }
 
